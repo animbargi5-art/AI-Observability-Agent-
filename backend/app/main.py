@@ -1,19 +1,14 @@
 from fastapi import FastAPI
 
+from app.api.health import router as health_router
+from app.api.root import router as root_router
+from app.core.settings import settings
+
 app = FastAPI(
-    title="Tattva AI",
+    title=settings.APP_NAME,
     description="Evidence-Driven Incident Intelligence",
-    version="1.0.0",
+    version=settings.APP_VERSION,
 )
 
-@app.get("/")
-def root():
-    return {
-        "message": "Tattva AI Backend Running"
-    }
-
-@app.get("/health")
-def health():
-    return {
-        "status": "healthy"
-    }
+app.include_router(root_router)
+app.include_router(health_router)
