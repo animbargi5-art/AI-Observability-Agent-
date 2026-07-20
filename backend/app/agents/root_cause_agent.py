@@ -13,29 +13,13 @@ class RootCauseAgent(BaseAgent):
 
         self.memory = memory
 
-    def execute(self):
+    def collect_evidence(self):
 
-        evidence = self.memory.evidence
+        return self.memory.evidence
+    
+    def group_by_service(self, evidence):
 
-        print(f"Collected Evidence: {len(evidence)}")
-
-        if len(evidence) == 0:
-
-            hypothesis = {
-                "cause": "No evidence available",
-                "confidence": 0
-            }
-
-            self.memory.add_hypothesis(hypothesis)
-
-            self.memory.set_confidence(0)
-
-            return {
-                "root_cause": None,
-                "confidence": 0
-            }
-
-        services = {}
+        grouped = {}
 
         for item in evidence:
 
@@ -44,23 +28,76 @@ class RootCauseAgent(BaseAgent):
                     .get("service", "Unknown Service")
             )
 
-            services[service] = services.get(service, 0) + 1
+            grouped.setdefault(service, []).append(item)
 
-        most_likely = max(
-            services,
-            key=services.get
+        return grouped
+
+    def generate_hypotheses(self, grouped):
+
+        hypotheses = []
+
+        for service, evidence in grouped.items():
+
+            hypotheses.append({
+                "service": service,
+                "cause": f"Possible issue in {service}",
+                "confidence": min(
+                    len(evidence) * 20,
+                    90
+                )
+            })
+
+        return hypotheses
+
+    def execute(self):
+
+        evidence = self.memory.evidence
+
+        graph = self.memory.graph
+
+        nodes = graph.get("nodes", [])
+
+        edges = graph.get("edges", [])
+
+        print(f"Collected Evidence: {len(evidence)}")
+
+        print(f"Graph Nodes: {len(nodes)}")
+
+        print(f"Graph Edges: {len(edges)}")
+
+        if not evidence:
+
+            hypothesis = {
+                "cause": "No evidence available",
+                "confidence": 0
+            }
+
+            self.memory.add_hypothesis(hypothesis)
+            self.memory.set_confidence(0)
+
+            return {
+                "root_cause": None,
+                "confidence": 0
+            }
+
+        grouped = self.group_by_service(evidence)
+
+        hypotheses = self.generate_hypotheses(grouped)
+
+        best = max(
+            hypotheses,
+            key=lambda h: h["confidence"]
         )
 
-        hypothesis = {
-            "cause": f"Most evidence points to {most_likely}",
-            "confidence": 70
-        }
+        self.memory.add_hypothesis(best)
 
-        self.memory.add_hypothesis(hypothesis)
+        self.memory.set_confidence(best["confidence"])
 
-        self.memory.set_confidence(70)
+        self.memory.add_timeline_event(
+            "Root cause analysis completed."
+        )
 
         return {
-            "root_cause": hypothesis["cause"],
-            "confidence": 70
+            "root_cause": best["cause"],
+            "confidence": best["confidence"]
         }

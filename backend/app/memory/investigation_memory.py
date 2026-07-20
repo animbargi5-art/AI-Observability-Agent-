@@ -6,6 +6,10 @@ class InvestigationMemory:
 
         self.evidence = []
 
+        self.correlations = []
+
+        self.graph = {}
+
         self.timeline = []
 
         self.hypotheses = []

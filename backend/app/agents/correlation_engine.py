@@ -1,34 +1,64 @@
-class CorrelationEngine:
+from app.memory.investigation_memory import InvestigationMemory
 
-    def correlate(self, findings):
+
+class CorrelationEngine:
+    """
+    Correlates evidence collected by all investigation agents.
+    """
+
+    def __init__(self, memory: InvestigationMemory):
+
+        self.memory = memory
+
+    def run(self):
+
+        evidence = self.memory.evidence
+
+        print(f"Collected Evidence: {len(evidence)}")
 
         correlated = []
 
-        for finding in findings:
+        for finding in evidence:
 
-            trace = finding["trace"]
+            trace = finding.get("trace", {})
 
-            duration = trace["duration_ms"]
+            duration = trace.get("duration_ms", 0)
 
             causes = []
 
+            # Slow request correlation
             if duration > 2000:
                 causes.append(
                     "Blocking operation or expensive processing detected."
                 )
 
-            if trace["method"] == "GET":
+            # GET endpoint correlation
+            if trace.get("method") == "GET":
                 causes.append(
                     "Review endpoint implementation and downstream dependencies."
                 )
 
             correlated.append({
-                "severity": finding["severity"],
-                "service": trace["service"],
-                "endpoint": trace["endpoint"],
+
+                "severity": finding.get("severity"),
+
+                "service": trace.get("service"),
+
+                "endpoint": trace.get("endpoint"),
+
                 "duration_ms": duration,
+
                 "possible_causes": causes,
+
                 "trace": trace
             })
 
-        return correlated
+        # Store correlations inside shared memory
+        self.memory.correlations = correlated
+
+        return {
+
+            "total_correlations": len(correlated),
+
+            "correlations": correlated
+        }
