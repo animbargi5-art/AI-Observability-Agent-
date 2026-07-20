@@ -1,5 +1,7 @@
 from app.memory.manager import InvestigationMemory
 
+from app.graph.workflow import graph
+
 
 class IncidentCoordinator:
 
@@ -13,7 +15,32 @@ class IncidentCoordinator:
         service_name: str
     ):
 
-        return self.memory.create(
+        investigation = self.memory.create(
             incident_id,
-            service_name
+            service_name,
         )
+
+        result = graph.invoke(
+            {
+
+                "investigation": investigation,
+
+                "traces": [],
+
+                 "logs": [],
+
+        "metrics": [],
+
+        "dependencies": [],
+
+        "historical_incidents": [],
+
+        "evidence": [],
+
+        "hypotheses": [],
+
+        "recommendations": []
+    }
+)
+
+        return result
