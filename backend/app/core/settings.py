@@ -6,6 +6,9 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     ENVIRONMENT: str = "development"
 
+    SIGNOZ_URL: str
+    SIGNOZ_API_KEY: str = ""
+
     HOST: str = "0.0.0.0"
     PORT: int = 8000
     DEBUG: bool = True
