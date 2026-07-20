@@ -1,4 +1,5 @@
 from app.agents.base_agent import BaseAgent
+from app.decision.reasoning_engine import ReasoningEngine
 
 
 class ReportAgent(BaseAgent):
@@ -12,7 +13,13 @@ class ReportAgent(BaseAgent):
 
         self.memory = memory
 
+        self.reasoning_engine = ReasoningEngine(memory)
+
     def execute(self):
+
+        reasoning = self.reasoning_engine.analyze()
+
+        graph = self.memory.graph
 
         report = {
 
@@ -22,6 +29,17 @@ class ReportAgent(BaseAgent):
 
             "evidence": self.memory.evidence,
 
+            "correlations": self.memory.correlations,
+
+            "graph": {
+
+                "nodes": len(graph.get("nodes", [])),
+
+                "edges": len(graph.get("edges", []))
+            },
+
+            "reasoning": reasoning,
+
             "root_cause": (
                 self.memory.hypotheses[0]
                 if self.memory.hypotheses
@@ -30,9 +48,45 @@ class ReportAgent(BaseAgent):
 
             "recommendations": self.memory.recommendations,
 
-            "confidence": self.memory.confidence
+            "confidence": self.memory.confidence,
+
+            "summary": self.generate_summary(reasoning)
         }
 
         self.memory.set_final_report(report)
 
+        self.memory.add_timeline_event(
+            "Final investigation report generated."
+        )
+
         return report
+
+    def generate_summary(self, reasoning):
+
+        incident = self.memory.incident
+
+        if incident.get("status") == "NO_ISSUE":
+
+            return (
+                "No active incident was detected during the investigation."
+            )
+
+        severity = incident.get("severity", "UNKNOWN")
+
+        title = incident.get("title", "Unknown Incident")
+
+        services = reasoning.get("services", {})
+
+        service_list = ", ".join(services.keys())
+
+        if not service_list:
+
+            service_list = "Unknown"
+
+        return (
+            f"Investigation completed. "
+            f"Incident '{title}' "
+            f"with severity '{severity}' "
+            f"affected services: {service_list}. "
+            f"Confidence Score: {self.memory.confidence}%."
+        )
