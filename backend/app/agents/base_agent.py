@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import time
+import traceback
 
 
 class BaseAgent(ABC):
@@ -40,6 +41,8 @@ class BaseAgent(ABC):
         end_time = time.time()
 
         elapsed = round(end_time - self.start_time, 3)
+        
+        self.execution_time = elapsed
 
         print("-" * 60)
         print(f"{self.name} completed.")
@@ -63,7 +66,12 @@ class BaseAgent(ABC):
 
         except Exception as ex:
 
+            print("=" * 60)
             print(f"[ERROR] {self.name}")
+            print("=" * 60)
+
             print(ex)
+
+            traceback.print_exc()
 
             raise

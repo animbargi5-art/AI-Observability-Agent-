@@ -2,6 +2,7 @@ from app.agents.base_agent import BaseAgent
 from app.tools.trace_tool import TraceTool
 from app.memory.investigation_memory import InvestigationMemory
 
+SLOW_API_THRESHOLD = 1000
 
 class TraceAgent(BaseAgent):
     """
@@ -32,10 +33,10 @@ class TraceAgent(BaseAgent):
         traces = self.fetch_traces()
 
         rows = (
-            traces["data"]
-                  ["data"]
-                  ["results"][0]
-                  ["rows"]
+            traces.get("data", {})
+                  .get("data", {})
+                  .get("results", [{}])[0]
+                  .get("rows", [])
         )
 
         incidents = []
@@ -90,9 +91,12 @@ class TraceAgent(BaseAgent):
             status = incident["status"]
 
             # Slow request
-            if duration > 1000:
+            if duration > SLOW_API_THRESHOLD:
                 findings.append({
                     "severity": "HIGH",
+                    "confidence": 85,
+                    "confidence": 95,
+                    "confidence": 70,
                     "type": "Slow API",
                     "message": (
                         f"{incident['endpoint']} took "

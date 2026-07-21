@@ -61,3 +61,15 @@ class InvestigationMemory:
         Store the generated investigation report.
         """
         self.final_report = report
+
+    def set_graph(self, graph: dict):
+        """
+        Store the investigation graph.
+        """
+        self.graph = graph
+
+    def set_correlations(self, correlations: list):
+        """
+        Store correlated evidence.
+        """
+        self.correlations = correlations
