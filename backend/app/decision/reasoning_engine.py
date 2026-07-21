@@ -5,7 +5,8 @@ from app.memory.investigation_memory import InvestigationMemory
 
 class ReasoningEngine:
     """
-    Performs reasoning over the investigation graph.
+    Performs reasoning over the investigation graph
+    and all collected investigation evidence.
     """
 
     def __init__(self, memory: InvestigationMemory):
@@ -16,6 +17,10 @@ class ReasoningEngine:
 
         graph = self.memory.graph
 
+        evidence = self.memory.evidence
+
+        correlations = self.memory.correlations
+
         nodes = graph.get("nodes", [])
 
         edges = graph.get("edges", [])
@@ -25,10 +30,15 @@ class ReasoningEngine:
             "LOW": 1,
             "MEDIUM": 2,
             "HIGH": 3,
-            "CRITICAL": 4
+            "CRITICAL": 4,
+            "ERROR": 4
         }
 
         service_counter = Counter()
+
+        finding_counter = Counter()
+
+        category_counter = Counter()
 
         highest_severity = "NONE"
 
@@ -41,7 +51,27 @@ class ReasoningEngine:
         incident_lookup = {}
 
         # -------------------------------------
-        # Build lookup tables
+        # Analyze collected evidence
+        # -------------------------------------
+
+        for finding in evidence:
+
+            finding_counter[
+                finding.get("type", "Unknown")
+            ] += 1
+
+            category_counter[
+                finding.get("category", "General")
+            ] += 1
+
+            severity = finding.get("severity", "LOW")
+
+            if severity_order.get(severity, 0) > severity_order.get(highest_severity, 0):
+
+                highest_severity = severity
+
+        # -------------------------------------
+        # Build graph lookup tables
         # -------------------------------------
 
         for node in nodes:
@@ -96,27 +126,20 @@ class ReasoningEngine:
 
             severity = incident.get("severity", "LOW")
 
-            if (
-                severity_order[severity]
-                >
-                severity_order[highest_severity]
-            ):
+            if severity_order.get(severity, 0) > severity_order.get(highest_severity, 0):
 
                 highest_severity = severity
 
             if severity in ["HIGH", "CRITICAL"]:
 
-                suspicious_services.append({
-
-                    "service": service,
-
-                    "severity": severity,
-
-                    "endpoint": endpoint.get("label"),
-
-                    "incident": incident.get("label")
-
-                })
+                suspicious_services.append(
+                    {
+                        "service": service,
+                        "severity": severity,
+                        "endpoint": endpoint.get("label"),
+                        "incident": incident.get("label"),
+                    }
+                )
 
         # -------------------------------------
         # Build reasoning summary
@@ -144,15 +167,27 @@ class ReasoningEngine:
                 f"Detected {len(service_counter)} services."
             )
 
+        reasoning.append(
+            f"Collected {len(evidence)} evidence items."
+        )
+
+        reasoning.append(
+            f"Generated {len(correlations)} correlations."
+        )
+
+        reasoning.append(
+            f"Detected {len(finding_counter)} incident types."
+        )
+
+        reasoning.append(
+            f"Highest severity observed: {highest_severity}."
+        )
+
+        if suspicious_services:
+
             reasoning.append(
-                f"Highest severity observed: {highest_severity}."
+                f"{len(suspicious_services)} high-priority incidents detected."
             )
-
-            if suspicious_services:
-
-                reasoning.append(
-                    f"{len(suspicious_services)} high-priority incidents detected."
-                )
 
         return {
 
@@ -167,6 +202,14 @@ class ReasoningEngine:
             "suspicious_services": suspicious_services,
 
             "reasoning": reasoning,
+
+            "evidence_count": len(evidence),
+
+            "finding_types": dict(finding_counter),
+
+            "categories": dict(category_counter),
+
+            "correlation_count": len(correlations),
 
             "status": "READY"
 

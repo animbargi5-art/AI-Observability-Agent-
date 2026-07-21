@@ -2,6 +2,8 @@ from app.agents.base_agent import BaseAgent
 from app.tools.metrics_tool import MetricsTool
 from app.memory.investigation_memory import InvestigationMemory
 
+HIGH_TRAFFIC_THRESHOLD = 30
+MEDIUM_TRAFFIC_THRESHOLD = 15
 
 class MetricsAgent(BaseAgent):
     """
@@ -80,7 +82,7 @@ class MetricsAgent(BaseAgent):
 
             timestamp = point.get("timestamp")
 
-            if value > 100:
+            if value >= HIGH_TRAFFIC_THRESHOLD:
 
                 findings.append({
 
@@ -92,17 +94,19 @@ class MetricsAgent(BaseAgent):
 
                     "message": f"HTTP request rate reached {value}",
 
+                    "category": "Infrastructure",
+
+                    "root_service": "tattva-ai-backend",
+
                     "metric": {
-
+                        "name": "HTTP Request Rate",
                         "value": value,
-
                         "timestamp": timestamp
-
                     }
 
                 })
 
-            elif value > 50:
+            elif value >= MEDIUM_TRAFFIC_THRESHOLD:
 
                 findings.append({
 
@@ -114,14 +118,15 @@ class MetricsAgent(BaseAgent):
 
                     "message": f"HTTP request rate increased to {value}",
 
+                    "category": "Infrastructure",
+
+                    "root_service": "tattva-ai-backend",
+
                     "metric": {
-
+                        "name": "HTTP Request Rate",
                         "value": value,
-
                         "timestamp": timestamp
-
                     }
-
                 })
 
         for finding in findings:
@@ -132,7 +137,12 @@ class MetricsAgent(BaseAgent):
         )
 
         if findings:
-            self.memory.set_confidence(88)
+
+            highest_confidence = max(
+                finding["confidence"]
+                for finding in findings
+            )
+            self.memory.set_confidence(highest_confidence)
 
         return {
             "total_metrics": len(findings),

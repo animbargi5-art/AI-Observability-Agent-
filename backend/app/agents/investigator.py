@@ -1,4 +1,8 @@
 class Investigator:
+    """
+    Converts investigation findings into a structured
+    investigation report.
+    """
 
     def investigate(self, findings):
 
@@ -6,43 +10,90 @@ class Investigator:
 
         for finding in findings:
 
-            trace = finding["trace"]
+            trace = finding.get("trace", {})
 
             report.append({
 
-                "severity": finding["severity"],
+                "severity": finding.get("severity"),
 
-                "service": trace["service"],
+                "type": finding.get("type"),
 
-                "endpoint": trace["endpoint"],
+                "service": trace.get("service"),
 
-                "summary": (
-                    f"{trace['endpoint']} is taking "
-                    f"{trace['duration_ms']} ms."
-                ),
+                "endpoint": trace.get("endpoint"),
 
-                "possible_causes": [
+                "status": trace.get("status"),
 
-                    "Slow database query",
+                "duration_ms": trace.get("duration_ms"),
 
-                    "External API latency",
+                "summary": finding.get("message"),
 
-                    "Blocking synchronous code",
+                "possible_causes": self.get_possible_causes(finding),
 
-                    "CPU-intensive processing"
-
-                ],
-
-                "recommendation": (
-
-                    "Inspect database queries, "
-
-                    "external dependencies, "
-
-                    "and profile the endpoint."
-
-                )
+                "recommendation": self.get_recommendation(finding)
 
             })
 
         return report
+
+    def get_possible_causes(self, finding):
+
+        incident_type = finding.get("type", "").lower()
+
+        if "slow" in incident_type:
+
+            return [
+                "Slow database query",
+                "External API latency",
+                "CPU intensive processing",
+                "Missing indexes",
+                "Thread starvation"
+            ]
+
+        elif "server error" in incident_type:
+
+            return [
+                "Unhandled exception",
+                "Application bug",
+                "Database failure",
+                "Dependency unavailable"
+            ]
+
+        elif "client error" in incident_type:
+
+            return [
+                "Invalid request",
+                "Authentication failure",
+                "Missing parameters"
+            ]
+
+        return [
+            "Unknown cause"
+        ]
+
+    def get_recommendation(self, finding):
+
+        incident_type = finding.get("type", "").lower()
+
+        if "slow" in incident_type:
+
+            return (
+                "Inspect SQL queries, traces, external services "
+                "and profile the endpoint."
+            )
+
+        elif "server error" in incident_type:
+
+            return (
+                "Inspect application logs, stack traces "
+                "and recent deployments."
+            )
+
+        elif "client error" in incident_type:
+
+            return (
+                "Validate incoming request payloads "
+                "and API contracts."
+            )
+
+        return "Further investigation required."

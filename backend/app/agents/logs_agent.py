@@ -31,15 +31,74 @@ class LogsAgent(BaseAgent):
 
     def analyze(self, logs):
 
-        print("\n========== LOGS RESPONSE ==========")
-        print(logs)
-        print("===================================\n")
-        
+        rows = (
+            logs.get("data", {})
+                .get("data", {})
+                .get("results", [{}])[0]
+                .get("rows", [])
+        )
+
         findings = []
 
-        # Future log analysis logic will go here.
-        # For now there are no log findings because
-        # the local SigNoz instance has no logs.
+        for row in rows:
+
+            data = row["data"]
+
+            body = data.get("body", "")
+            severity = data.get("severity_text", "")
+            severity = severity.upper()
+            timestamp = row.get("timestamp")
+
+            service = (
+                data.get("resources_string", {})
+                    .get("service.name")
+            )
+
+            trace_id = data.get("trace_id")
+
+            span_id = data.get("span_id")
+
+            if severity == "ERROR":
+
+                findings.append(
+                    {
+                        "severity": "CRITICAL",
+                        "confidence": 98,
+                        "type": "Application Error",
+                        "category": "Application",
+                        "root_service": service,
+                        "message": body,
+                        "trace": {
+                            "service": service,
+                            "endpoint": "Log Event",
+                            "status": "ERROR",
+                            "trace_id": trace_id,
+                            "span_id": span_id,
+                            "timestamp": timestamp,
+                        },
+                    }
+                )
+            
+            elif severity == "WARN":
+
+                findings.append(
+                    {
+                        "severity": "HIGH",
+                        "confidence": 90,
+                        "type": "Performance Warning",
+                        "category": "Application",
+                        "root_service": service,
+                        "message": body,
+                        "trace": {
+                            "service": service,
+                            "endpoint": "Log Event",
+                            "status": "WARN",
+                            "trace_id": trace_id,
+                            "span_id": span_id,
+                            "timestamp": timestamp,
+                        },
+                    }
+                ) 
 
         for finding in findings:
             self.memory.add_evidence(finding)
@@ -49,9 +108,13 @@ class LogsAgent(BaseAgent):
         )
 
         if findings:
-            self.memory.set_confidence(85)
+            highest_confidence = max(
+                finding["confidence"]
+                for finding in findings
+            )
+            self.memory.set_confidence(highest_confidence)
 
         return {
-            "total_logs": len(findings),
+            "total_logs": len(rows),
             "findings": findings
         }

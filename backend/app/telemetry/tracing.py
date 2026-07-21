@@ -1,25 +1,44 @@
-from opentelemetry import trace
+from opentelemetry import trace, metrics
+from opentelemetry._logs import set_logger_provider
+
 from opentelemetry.sdk.resources import Resource
+
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import (
+    PeriodicExportingMetricReader,
+)
+
+from opentelemetry.sdk._logs import LoggerProvider
+from opentelemetry.sdk._logs.export import (
+    BatchLogRecordProcessor,
+)
 
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
     OTLPSpanExporter,
 )
 
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from opentelemetry.instrumentation.requests import RequestsInstrumentor
-
-from opentelemetry import metrics
-
-from opentelemetry.sdk.metrics import MeterProvider
-
-from opentelemetry.sdk.metrics.export import (
-    PeriodicExportingMetricReader,
-)
-
 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
     OTLPMetricExporter,
+)
+
+# ⭐ THIS IMPORT WAS MISSING
+from opentelemetry.exporter.otlp.proto.grpc._log_exporter import (
+    OTLPLogExporter,
+)
+
+from opentelemetry.instrumentation.fastapi import (
+    FastAPIInstrumentor,
+)
+
+from opentelemetry.instrumentation.requests import (
+    RequestsInstrumentor,
+)
+
+from opentelemetry.instrumentation.logging import (
+    LoggingInstrumentor,
 )
 
 from app.core.settings import settings
@@ -33,12 +52,28 @@ def setup_tracing(app):
         }
     )
 
-    provider = TracerProvider(resource=resource)
+    # -----------------------------
+    # Tracing
+    # -----------------------------
 
-    exporter = OTLPSpanExporter(
+    tracer_provider = TracerProvider(
+        resource=resource
+    )
+
+    trace_exporter = OTLPSpanExporter(
         endpoint=settings.OTEL_EXPORTER_OTLP_ENDPOINT,
         insecure=True,
     )
+
+    tracer_provider.add_span_processor(
+        BatchSpanProcessor(trace_exporter)
+    )
+
+    trace.set_tracer_provider(tracer_provider)
+
+    # -----------------------------
+    # Metrics
+    # -----------------------------
 
     metric_exporter = OTLPMetricExporter(
         endpoint=settings.OTEL_EXPORTER_OTLP_ENDPOINT,
@@ -54,13 +89,40 @@ def setup_tracing(app):
         metric_readers=[metric_reader],
     )
 
-    metrics.set_meter_provider(meter_provider)
-
-    provider.add_span_processor(
-        BatchSpanProcessor(exporter)
+    metrics.set_meter_provider(
+        meter_provider
     )
 
-    trace.set_tracer_provider(provider)
+    # -----------------------------
+    # Logs
+    # -----------------------------
+
+    log_exporter = OTLPLogExporter(
+        endpoint=settings.OTEL_EXPORTER_OTLP_ENDPOINT,
+        insecure=True,
+    )
+
+    logger_provider = LoggerProvider(
+        resource=resource,
+    )
+
+    logger_provider.add_log_record_processor(
+        BatchLogRecordProcessor(
+            log_exporter
+        )
+    )
+
+    set_logger_provider(
+        logger_provider
+    )
+
+    LoggingInstrumentor().instrument(
+        set_logging_format=True
+    )
+
+    # -----------------------------
+    # Auto Instrumentation
+    # -----------------------------
 
     FastAPIInstrumentor.instrument_app(app)
 

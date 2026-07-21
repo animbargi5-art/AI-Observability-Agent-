@@ -41,9 +41,28 @@ class RootCauseAgent(BaseAgent):
 
         for service, evidence in grouped.items():
 
+            finding_types = {
+                item.get("type", "")
+                for item in evidence
+            }
+
+            cause = f"Possible issue in {service}"
+
+            if "Critical Slow API" in finding_types:
+                cause = f"High latency detected in {service}"
+
+            elif "Application Error" in finding_types:
+                cause = f"Application exception detected in {service}"
+
+            elif "Traffic Spike" in finding_types:
+                cause = f"Traffic surge affecting {service}"
+
+            elif "Database Timeout" in finding_types:
+                cause = f"Database performance issue in {service}"
+
             hypotheses.append({
                 "service": service,
-                "cause": f"Possible issue in {service}",
+                "cause": cause,
                 "confidence": min(
                     len(evidence) * 20,
                     90
