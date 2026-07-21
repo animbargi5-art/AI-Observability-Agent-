@@ -38,7 +38,7 @@ class RecommendationAgent(BaseAgent):
 
             recommendations.append({
                 "priority": "LOW",
-                "title": "No action required",
+                "title": "No Action Required",
                 "description": "No active incident was detected."
             })
 
@@ -50,34 +50,77 @@ class RecommendationAgent(BaseAgent):
 
             incident_type = item.get("type", "")
 
-            if incident_type == "Slow API":
+            # ----------------------------------------------
+            # Slow APIs
+            # ----------------------------------------------
+
+            if incident_type in ["Slow API", "Critical Slow API"]:
 
                 recommendations.append({
-                    "priority": "HIGH",
-                    "title": "Investigate database performance",
+                    "priority": (
+                        "CRITICAL"
+                        if incident_type == "Critical Slow API"
+                        else "HIGH"
+                    ),
+                    "title": "Investigate API Latency",
                     "description": (
-                        "Check slow SQL queries, database indexes "
-                        "and connection pool usage."
+                        "Profile the endpoint, inspect SQL queries, "
+                        "review external dependencies, thread blocking, "
+                        "and database connection pool usage."
                     )
                 })
 
-            elif incident_type == "Server Error":
+            # ----------------------------------------------
+            # Application / Server Errors
+            # ----------------------------------------------
+
+            elif incident_type in ["Server Error", "Application Error"]:
 
                 recommendations.append({
                     "priority": "CRITICAL",
-                    "title": "Inspect application errors",
+                    "title": "Inspect Application Errors",
                     "description": (
-                        "Review stack traces and recent deployments."
+                        "Review stack traces, exception logs, "
+                        "and application telemetry."
                     )
                 })
+
+                recommendations.append({
+                    "priority": "HIGH",
+                    "title": "Review Recent Deployment",
+                    "description": (
+                        "Compare the latest deployment with the previous release, "
+                        "inspect configuration changes and recent commits."
+                    )
+                })
+
+            # ----------------------------------------------
+            # Client Errors
+            # ----------------------------------------------
 
             elif incident_type == "Client Error":
 
                 recommendations.append({
                     "priority": "MEDIUM",
-                    "title": "Review client requests",
+                    "title": "Review Client Requests",
                     "description": (
-                        "Validate request payloads and API contracts."
+                        "Validate request payloads, authentication, "
+                        "and API contracts."
+                    )
+                })
+
+            # ----------------------------------------------
+            # Traffic Spikes
+            # ----------------------------------------------
+
+            elif incident_type == "Traffic Spike":
+
+                recommendations.append({
+                    "priority": "MEDIUM",
+                    "title": "Investigate Traffic Surge",
+                    "description": (
+                        "Verify autoscaling, inspect request patterns, "
+                        "review load balancer metrics and identify abnormal traffic."
                     )
                 })
 
@@ -87,26 +130,60 @@ class RecommendationAgent(BaseAgent):
 
         for hypothesis in hypotheses:
 
-            cause = hypothesis.get("cause", "")
+            cause = hypothesis.get("cause", "").lower()
 
-            if "database" in cause.lower():
+            if "database" in cause:
 
                 recommendations.append({
                     "priority": "HIGH",
-                    "title": "Optimize database",
+                    "title": "Optimize Database",
                     "description": (
-                        "Investigate slow queries, indexes, "
-                        "locks and database performance."
+                        "Investigate slow queries, indexes, locks, "
+                        "connection pools and overall database performance."
                     )
                 })
 
-            elif "service" in cause.lower():
+            elif "latency" in cause:
+
+                recommendations.append({
+                    "priority": "HIGH",
+                    "title": "Investigate Service Latency",
+                    "description": (
+                        "Analyze endpoint latency, downstream dependencies "
+                        "and infrastructure bottlenecks."
+                    )
+                })
+
+            elif "application" in cause:
+
+                recommendations.append({
+                    "priority": "HIGH",
+                    "title": "Resolve Application Exceptions",
+                    "description": (
+                        "Inspect application logs, exception traces "
+                        "and recent code changes."
+                    )
+                })
+
+            elif "traffic" in cause:
 
                 recommendations.append({
                     "priority": "MEDIUM",
-                    "title": "Inspect affected service",
+                    "title": "Manage Traffic Growth",
                     "description": (
-                        "Review service logs, traces and recent deployments."
+                        "Review scaling policies, rate limiting "
+                        "and traffic distribution."
+                    )
+                })
+
+            elif "service" in cause:
+
+                recommendations.append({
+                    "priority": "MEDIUM",
+                    "title": "Inspect Affected Service",
+                    "description": (
+                        "Review service logs, distributed traces "
+                        "and recent deployments."
                     )
                 })
 
@@ -130,6 +207,15 @@ class RecommendationAgent(BaseAgent):
                 "title": "Prioritize Investigation",
                 "description":
                     "High severity findings should be investigated first."
+            })
+
+        elif highest_severity == "MEDIUM":
+
+            recommendations.append({
+                "priority": "MEDIUM",
+                "title": "Continue Active Monitoring",
+                "description":
+                    "Continue monitoring while investigating affected services."
             })
 
         elif highest_severity == "LOW":
@@ -160,7 +246,7 @@ class RecommendationAgent(BaseAgent):
                 "priority": "MEDIUM",
                 "title": "Validate Root Cause",
                 "description":
-                    "The suspected root cause should be verified with additional telemetry."
+                    "Verify the suspected root cause using additional traces, logs and metrics."
             })
 
         else:

@@ -19,9 +19,58 @@ class ReportAgent(BaseAgent):
 
         reasoning = self.reasoning_engine.analyze()
 
+        executive_summary = {
+
+            "incident_title": self.memory.incident.get(
+                "title",
+                "Unknown Incident"
+            ),
+
+            "severity": self.memory.incident.get(
+                "severity",
+                "UNKNOWN"
+            ),
+
+            "confidence": self.memory.confidence,
+
+            "highest_severity": reasoning.get(
+                "highest_severity"
+            ),
+
+            "status": self.memory.incident.get(
+                "status",
+                "UNKNOWN"
+            )
+
+        }
+
         graph = self.memory.graph
 
+        evidence = self.memory.evidence
+
+        recommendations = self.memory.recommendations
+
+        correlations = self.memory.correlations
+
+        timeline = self.memory.timeline
+
+        statistics = {
+
+            "evidence_count": len(evidence),
+
+            "recommendation_count": len(recommendations),
+
+            "correlation_count": len(correlations),
+
+            "timeline_events": len(timeline)
+
+        }
+
         report = {
+
+            "executive_summary": executive_summary,
+
+            "statistics": statistics,
 
             "incident": self.memory.incident,
 
@@ -84,9 +133,19 @@ class ReportAgent(BaseAgent):
             service_list = "Unknown"
 
         return (
-            f"Investigation completed. "
-            f"Incident '{title}' "
-            f"with severity '{severity}' "
-            f"affected services: {service_list}. "
-            f"Confidence Score: {self.memory.confidence}%."
+
+            f"Investigation completed for '{title}'. "
+
+            f"Severity: {severity}. "
+
+            f"Evidence collected: {len(self.memory.evidence)}. "
+
+            f"Recommendations generated: "
+
+            f"{len(self.memory.recommendations)}. "
+
+            f"Confidence Score: "
+
+            f"{self.memory.confidence}%."
+
         )

@@ -2,19 +2,7 @@ from datetime import datetime
 import time
 
 from app.memory.investigation_memory import InvestigationMemory
-
-from app.agents.trace_agent import TraceAgent
-from app.agents.logs_agent import LogsAgent
-from app.agents.metrics_agent import MetricsAgent
-from app.agents.dependency_agent import DependencyAgent
-from app.agents.alert_agent import AlertAgent
-from app.agents.historical_agent import HistoricalAgent
-from app.agents.root_cause_agent import RootCauseAgent
-from app.agents.recommendation_agent import RecommendationAgent
-from app.agents.report_agent import ReportAgent
-from app.agents.correlation_engine import CorrelationEngine
-
-from app.graph.graph_builder import GraphBuilder
+from app.orchestration.investigation_orchestrator import InvestigationOrchestrator
 
 
 class IncidentCoordinator:
@@ -26,20 +14,10 @@ class IncidentCoordinator:
 
         self.memory = InvestigationMemory()
 
-        self.trace_agent = TraceAgent(self.memory)
-        self.logs_agent = LogsAgent(self.memory)
-        self.metrics_agent = MetricsAgent(self.memory)
-
-        self.dependency_agent = DependencyAgent(self.memory)
-        self.alert_agent = AlertAgent(self.memory)
-        self.historical_agent = HistoricalAgent(self.memory)
-
-        self.correlation_engine = CorrelationEngine(self.memory)
-        self.graph_builder = GraphBuilder(self.memory)
-
-        self.root_cause_agent = RootCauseAgent(self.memory)
-        self.recommendation_agent = RecommendationAgent(self.memory)
-        self.report_agent = ReportAgent(self.memory)
+        self.orchestrator = InvestigationOrchestrator(
+            self.memory,
+            self
+        )
 
     def start_investigation(self):
 
@@ -49,22 +27,7 @@ class IncidentCoordinator:
 
         start_time = time.time()
 
-        results = {}
-
-        results["trace"] = self.trace_agent.run()
-        results["logs"] = self.logs_agent.run()
-        results["metrics"] = self.metrics_agent.run()
-        results["dependency"] = self.dependency_agent.run()
-        results["alert"] = self.alert_agent.run()
-        results["historical"] = self.historical_agent.run()
-
-        self.build_incident()
-
-        results["correlation"] = self.correlation_engine.run()
-        results["graph"] = self.graph_builder.build()
-        results["root_cause"] = self.root_cause_agent.run()
-        results["recommendation"] = self.recommendation_agent.run()
-        results["report"] = self.report_agent.run()
+        report = self.orchestrator.run()
 
         execution_time = round(
             time.time() - start_time,
@@ -79,11 +42,10 @@ class IncidentCoordinator:
 
             "execution_time_seconds": execution_time,
 
-            "report": self.memory.final_report,
-
-            "raw_results": results,
+            "report": report,
 
             "memory": self.memory
+
         }
 
     def build_incident(self):

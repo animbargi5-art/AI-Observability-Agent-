@@ -38,6 +38,9 @@ class LogsAgent(BaseAgent):
                 .get("rows", [])
         )
 
+        if rows is None:
+            rows = []
+
         findings = []
 
         for row in rows:
