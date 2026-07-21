@@ -17,35 +17,91 @@ class GraphBuilder:
         nodes = []
         edges = []
 
-        for index, finding in enumerate(evidence):
+        service_nodes = {}
+        endpoint_nodes = {}
 
-            node = {
+        node_id = 1
 
-                "id": f"E{index + 1}",
+        for finding in evidence:
 
-                "label": finding.get("type", "Evidence"),
+            trace = finding.get("trace", {})
 
-                "severity": finding.get("severity", "LOW"),
+            service = trace.get("service", "Unknown Service")
 
-                "service": finding.get("trace", {}).get("service"),
+            endpoint = trace.get("endpoint", "Unknown Endpoint")
 
-                "endpoint": finding.get("trace", {}).get("endpoint")
+        # ----------------------------
+        # Service Node
+        # ----------------------------
 
+            if service not in service_nodes:
+
+                service_node = {
+                    "id": f"S{node_id}",
+                    "type": "SERVICE",
+                    "label": service
+                }
+
+                service_nodes[service] = service_node
+
+                nodes.append(service_node)
+
+                node_id += 1
+
+        # ----------------------------
+        # Endpoint Node
+        # ----------------------------
+
+            endpoint_key = f"{service}:{endpoint}"
+
+            if endpoint_key not in endpoint_nodes:
+
+                endpoint_node = {
+                    "id": f"P{node_id}",
+                    "type": "ENDPOINT",
+                    "label": endpoint
+                }
+
+                endpoint_nodes[endpoint_key] = endpoint_node
+
+                nodes.append(endpoint_node)
+
+                edges.append({
+                    "source": service_nodes[service]["id"],
+                    "target": endpoint_node["id"],
+                    "relation": "HAS_ENDPOINT"
+                })
+
+                node_id += 1
+
+        # ----------------------------
+        # Incident Node
+        # ----------------------------
+
+            incident_node = {
+
+                "id": f"E{node_id}",
+
+                "type": "INCIDENT",
+
+                "label": finding.get("type", "Incident"),
+
+                "severity": finding.get("severity", "LOW")
             }
 
-            nodes.append(node)
-
-        for i in range(len(nodes) - 1):
+            nodes.append(incident_node)
 
             edges.append({
 
-                "source": nodes[i]["id"],
+                "source": endpoint_nodes[endpoint_key]["id"],
 
-                "target": nodes[i + 1]["id"],
+                "target": incident_node["id"],
 
-                "relation": "related_to"
+                "relation": "TRIGGERED"
 
             })
+
+            node_id += 1
 
         graph = {
 

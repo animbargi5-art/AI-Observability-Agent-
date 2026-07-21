@@ -12,7 +12,6 @@ class RecommendationAgent(BaseAgent):
         )
 
         self.memory = memory
-
         self.reasoning_engine = ReasoningEngine(memory)
 
     def execute(self):
@@ -22,6 +21,12 @@ class RecommendationAgent(BaseAgent):
         hypotheses = self.memory.hypotheses
 
         reasoning = self.reasoning_engine.analyze()
+
+        highest_severity = reasoning["highest_severity"]
+
+        confidence = self.memory.confidence
+
+        suspicious_services = reasoning["suspicious_services"]
 
         recommendations = []
 
@@ -109,26 +114,80 @@ class RecommendationAgent(BaseAgent):
         # Recommendations from Reasoning Engine
         # --------------------------------------------------
 
-        highest = reasoning.get("highest_severity", "NONE")
-
-        if highest == "CRITICAL":
+        if highest_severity == "CRITICAL":
 
             recommendations.append({
                 "priority": "CRITICAL",
-                "title": "Immediate investigation required",
-                "description": (
-                    "Critical evidence detected by the reasoning engine."
-                )
+                "title": "Immediate Investigation Required",
+                "description":
+                    "Critical services were detected. Escalate immediately."
             })
 
-        elif highest == "HIGH":
+        elif highest_severity == "HIGH":
 
             recommendations.append({
                 "priority": "HIGH",
-                "title": "Prioritize investigation",
-                "description": (
+                "title": "Prioritize Investigation",
+                "description":
                     "High severity findings should be investigated first."
-                )
+            })
+
+        elif highest_severity == "LOW":
+
+            recommendations.append({
+                "priority": "LOW",
+                "title": "Monitor Performance",
+                "description":
+                    "Continue monitoring application latency. No immediate action is required."
+            })
+
+        # --------------------------------------------------
+        # Confidence-based recommendations
+        # --------------------------------------------------
+
+        if confidence >= 80:
+
+            recommendations.append({
+                "priority": "HIGH",
+                "title": "High Confidence Root Cause",
+                "description":
+                    "The investigation produced a high-confidence root cause. Verify and begin remediation."
+            })
+
+        elif confidence >= 50:
+
+            recommendations.append({
+                "priority": "MEDIUM",
+                "title": "Validate Root Cause",
+                "description":
+                    "The suspected root cause should be verified with additional telemetry."
+            })
+
+        else:
+
+            recommendations.append({
+                "priority": "LOW",
+                "title": "Collect More Evidence",
+                "description":
+                    "Investigation confidence is low. Gather additional traces, metrics and logs."
+            })
+
+        # --------------------------------------------------
+        # Suspicious Services
+        # --------------------------------------------------
+
+        service_names = sorted({
+            item.get("service", "Unknown")
+            for item in suspicious_services
+        })
+
+        if service_names:
+
+            recommendations.append({
+                "priority": "HIGH",
+                "title": "Investigate Suspicious Services",
+                "description":
+                    f"Review these services: {', '.join(service_names)}"
             })
 
         # --------------------------------------------------
@@ -141,11 +200,9 @@ class RecommendationAgent(BaseAgent):
 
         for recommendation in recommendations:
 
-            key = recommendation["title"]
+            if recommendation["title"] not in seen:
 
-            if key not in seen:
-
-                seen.add(key)
+                seen.add(recommendation["title"])
 
                 unique.append(recommendation)
 

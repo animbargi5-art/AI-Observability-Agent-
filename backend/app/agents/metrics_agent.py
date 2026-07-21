@@ -43,9 +43,86 @@ class MetricsAgent(BaseAgent):
 
         findings = []
 
-        # Future metric analysis logic will go here.
-        # For now there are no findings because the
-        # local SigNoz instance has no recent metrics.
+        results = (
+            metrics
+                .get("data", {})
+                .get("data", {})
+                .get("results", [])
+        )
+
+        if not results:
+            return {
+                "total_metrics": 0,
+                "findings": []
+            }
+
+        aggregations = results[0].get("aggregations", [])
+
+        if not aggregations:
+            return {
+                "total_metrics": 0,
+                "findings": []
+            }
+
+        series = aggregations[0].get("series", [])
+
+        if not series:
+            return {
+                "total_metrics": 0,
+                "findings": []
+            }
+
+        values = series[0].get("values", [])
+
+        for point in values:
+
+            value = point.get("value", 0)
+
+            timestamp = point.get("timestamp")
+
+            if value > 100:
+
+                findings.append({
+
+                    "severity": "HIGH",
+
+                    "type": "High Traffic",
+
+                    "confidence": 90,
+
+                    "message": f"HTTP request rate reached {value}",
+
+                    "metric": {
+
+                        "value": value,
+
+                        "timestamp": timestamp
+
+                    }
+
+                })
+
+            elif value > 50:
+
+                findings.append({
+
+                    "severity": "MEDIUM",
+
+                    "type": "Traffic Spike",
+
+                    "confidence": 75,
+
+                    "message": f"HTTP request rate increased to {value}",
+
+                    "metric": {
+
+                        "value": value,
+
+                        "timestamp": timestamp
+
+                    }
+
+                })
 
         for finding in findings:
             self.memory.add_evidence(finding)

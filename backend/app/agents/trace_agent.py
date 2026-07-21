@@ -2,7 +2,11 @@ from app.agents.base_agent import BaseAgent
 from app.tools.trace_tool import TraceTool
 from app.memory.investigation_memory import InvestigationMemory
 
+
+HEALTHY_THRESHOLD = 200
+WARNING_THRESHOLD = 500
 SLOW_API_THRESHOLD = 1000
+
 
 class TraceAgent(BaseAgent):
     """
@@ -21,7 +25,6 @@ class TraceAgent(BaseAgent):
 
         if memory is None:
             self.memory = InvestigationMemory()
-
         else:
             self.memory = memory
 
@@ -62,18 +65,19 @@ class TraceAgent(BaseAgent):
 
         findings = self.detect_incidents(incidents)
 
-        # Store all evidence in Shared Investigation Memory
         for finding in findings:
             self.memory.add_evidence(finding)
 
-        # Record one investigation step
         self.memory.add_timeline_event(
             "Trace investigation completed."
         )
 
-        # Temporary confidence score
         if findings:
-            self.memory.set_confidence(90)
+            highest_confidence = max(
+                finding["confidence"]
+                for finding in findings
+            )
+            self.memory.set_confidence(highest_confidence)
 
         return {
             "total_traces": len(incidents),
@@ -88,15 +92,30 @@ class TraceAgent(BaseAgent):
         for incident in incidents:
 
             duration = incident["duration_ms"]
-            status = incident["status"]
+            status = str(incident["status"])
 
-            # Slow request
+            # ----------------------------------------
+            # Performance Threshold Detection
+            # ----------------------------------------
+
             if duration > SLOW_API_THRESHOLD:
+
                 findings.append({
                     "severity": "HIGH",
-                    "confidence": 85,
                     "confidence": 95,
-                    "confidence": 70,
+                    "type": "Critical Slow API",
+                    "message": (
+                        f"{incident['endpoint']} took "
+                        f"{duration:.2f} ms"
+                    ),
+                    "trace": incident
+                })
+
+            elif duration > WARNING_THRESHOLD:
+
+                findings.append({
+                    "severity": "MEDIUM",
+                    "confidence": 85,
                     "type": "Slow API",
                     "message": (
                         f"{incident['endpoint']} took "
@@ -105,10 +124,28 @@ class TraceAgent(BaseAgent):
                     "trace": incident
                 })
 
-            # Server Error
-            elif str(status).startswith("5"):
+            elif duration > HEALTHY_THRESHOLD:
+
+                findings.append({
+                    "severity": "LOW",
+                    "confidence": 70,
+                    "type": "Performance Warning",
+                    "message": (
+                        f"{incident['endpoint']} took "
+                        f"{duration:.2f} ms"
+                    ),
+                    "trace": incident
+                })
+
+            # ----------------------------------------
+            # HTTP Status Detection
+            # ----------------------------------------
+
+            if status.startswith("5"):
+
                 findings.append({
                     "severity": "CRITICAL",
+                    "confidence": 98,
                     "type": "Server Error",
                     "message": (
                         f"{incident['endpoint']} returned "
@@ -117,10 +154,11 @@ class TraceAgent(BaseAgent):
                     "trace": incident
                 })
 
-            # Client Error
-            elif str(status).startswith("4"):
+            elif status.startswith("4"):
+
                 findings.append({
                     "severity": "MEDIUM",
+                    "confidence": 80,
                     "type": "Client Error",
                     "message": (
                         f"{incident['endpoint']} returned "

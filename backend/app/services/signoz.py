@@ -263,9 +263,9 @@ class SigNozService:
                             },
                             "aggregations": [
                                 {
-                                    "metricName": "http.server.duration.bucket",
-                                    "timeAggregation": "rate",
-                                    "spaceAggregation": "p90"
+                                    "metricName": "http.server.duration.count",
+                                    "timeAggregation": "sum",
+                                    "spaceAggregation": "sum"
                                 }
                             ]
                         }
@@ -278,6 +278,12 @@ class SigNozService:
             },
             "variables": {}
         }  
+        print("\n========== METRICS REQUEST ==========")
+        print("URL:", url)
+        print("Payload:")
+        print(payload)
+        print("=====================================\n")
+
         try:
             response = requests.post(
                 url=url,
@@ -286,8 +292,11 @@ class SigNozService:
                 timeout=30
             )
 
+            print("\n========== METRICS RESPONSE ==========")
             print("Status:", response.status_code)
+            print("Response:")
             print(response.text)
+            print("======================================\n")
 
             response.raise_for_status()
 
