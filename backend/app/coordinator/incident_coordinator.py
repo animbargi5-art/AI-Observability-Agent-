@@ -1,3 +1,6 @@
+from datetime import datetime
+import time
+
 from app.memory.investigation_memory import InvestigationMemory
 
 from app.agents.trace_agent import TraceAgent
@@ -11,6 +14,7 @@ from app.agents.recommendation_agent import RecommendationAgent
 from app.agents.report_agent import ReportAgent
 from app.agents.correlation_engine import CorrelationEngine
 
+
 class IncidentCoordinator:
     """
     Coordinates the complete AI investigation workflow.
@@ -18,7 +22,6 @@ class IncidentCoordinator:
 
     def __init__(self):
 
-        # One shared investigation memory
         self.memory = InvestigationMemory()
 
         self.trace_agent = TraceAgent(self.memory)
@@ -41,69 +44,96 @@ class IncidentCoordinator:
         print("Starting New Investigation")
         print("=" * 60)
 
+        start_time = time.time()
+
         results = {}
 
         results["trace"] = self.trace_agent.run()
-
         results["logs"] = self.logs_agent.run()
-
         results["metrics"] = self.metrics_agent.run()
-
         results["dependency"] = self.dependency_agent.run()
-
         results["alert"] = self.alert_agent.run()
-
         results["historical"] = self.historical_agent.run()
 
         self.build_incident()
 
         results["correlation"] = self.correlation_engine.run()
-
         results["root_cause"] = self.root_cause_agent.run()
-
         results["recommendation"] = self.recommendation_agent.run()
-
         results["report"] = self.report_agent.run()
 
+        execution_time = round(
+            time.time() - start_time,
+            3
+        )
 
         return {
-            "memory": self.memory,
-            "results": results
+
+            "status": "SUCCESS",
+
+            "timestamp": datetime.utcnow().isoformat(),
+
+            "execution_time_seconds": execution_time,
+
+            "report": self.memory.final_report,
+
+            "raw_results": results,
+
+            "memory": self.memory
         }
-    
+
     def build_incident(self):
-        """
-        Build the current incident from all collected evidence.
-        """
 
         evidence = self.memory.evidence
 
         if not evidence:
+
             self.memory.set_incident({
+
                 "id": "INC-000",
+
                 "title": "No active incident",
+
                 "severity": "NONE",
+
                 "status": "NO_ISSUE",
+
                 "evidence_count": 0
+
             })
+
             return
 
         highest = max(
+
             evidence,
+
             key=lambda x: {
+
                 "LOW": 1,
+
                 "MEDIUM": 2,
+
                 "HIGH": 3,
+
                 "CRITICAL": 4
+
             }.get(x.get("severity", "LOW"), 1)
+
         )
 
         incident = {
+
             "id": "INC-001",
+
             "title": highest.get("type", "Unknown Incident"),
+
             "severity": highest.get("severity", "LOW"),
+
             "status": "INVESTIGATING",
+
             "evidence_count": len(evidence)
+
         }
 
         self.memory.set_incident(incident)

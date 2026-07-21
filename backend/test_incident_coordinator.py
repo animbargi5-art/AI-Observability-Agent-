@@ -6,9 +6,25 @@ coordinator = IncidentCoordinator()
 
 result = coordinator.start_investigation()
 
-print("\nAGENT RESULTS\n")
+print("\nSTATUS\n")
 
-pprint(result["results"])
+print(result["status"])
+
+print("\nTIMESTAMP\n")
+
+print(result["timestamp"])
+
+print("\nEXECUTION TIME\n")
+
+print(result["execution_time_seconds"], "seconds")
+
+print("\nFINAL REPORT\n")
+
+pprint(result["report"])
+
+print("\nRAW RESULTS\n")
+
+pprint(result["raw_results"])
 
 print("\nMEMORY\n")
 

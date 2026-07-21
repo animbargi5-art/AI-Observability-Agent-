@@ -1,18 +1,18 @@
 from fastapi import APIRouter
 
-from app.agents.coordinator import IncidentCoordinator
+from app.coordinator.incident_coordinator import IncidentCoordinator
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/investigation",
+    tags=["Investigation"]
+)
 
 coordinator = IncidentCoordinator()
 
 
-@router.post("/investigation/start")
+@router.post("/start")
 def start():
 
-    state = coordinator.start_investigation(
-        incident_id="INC-001",
-        service_name="payment-service"
-    )
+    result = coordinator.start_investigation()
 
-    return state
+    return result
