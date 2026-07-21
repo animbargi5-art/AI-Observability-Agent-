@@ -31,6 +31,10 @@ class LogsAgent(BaseAgent):
 
     def analyze(self, logs):
 
+        print("\n========== LOGS RESPONSE ==========")
+        print(logs)
+        print("===================================\n")
+        
         findings = []
 
         # Future log analysis logic will go here.

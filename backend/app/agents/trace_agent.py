@@ -44,24 +44,22 @@ class TraceAgent(BaseAgent):
 
         incidents = []
 
-        if rows:
+        for row in rows:
 
-            for row in rows:
+            data = row["data"]
 
-                data = row["data"]
-
-                incidents.append({
-                    "service": data.get("service.name"),
-                    "endpoint": data.get("name"),
-                    "method": data.get("http_method"),
-                    "status": data.get("response_status_code"),
-                    "duration_ms": round(
-                        data.get("duration_nano", 0) / 1_000_000,
-                        2
-                    ),
-                    "trace_id": data.get("trace_id"),
-                    "timestamp": data.get("timestamp")
-                })
+            incidents.append({
+                "service": data.get("service.name"),
+                "endpoint": data.get("name"),
+                "method": data.get("http_method"),
+                "status": data.get("response_status_code"),
+                "duration_ms": round(
+                    data.get("duration_nano", 0) / 1_000_000,
+                    2
+                ),
+                "trace_id": data.get("trace_id"),
+                "timestamp": data.get("timestamp")
+            })
 
         findings = self.detect_incidents(incidents)
 
@@ -94,15 +92,17 @@ class TraceAgent(BaseAgent):
             duration = incident["duration_ms"]
             status = str(incident["status"])
 
-            # ----------------------------------------
-            # Performance Threshold Detection
-            # ----------------------------------------
+            # -------------------------------------------------
+            # Performance Detection
+            # -------------------------------------------------
 
             if duration > SLOW_API_THRESHOLD:
 
                 findings.append({
                     "severity": "HIGH",
                     "confidence": 95,
+                    "category": "Performance",
+                    "root_service": incident["service"],
                     "type": "Critical Slow API",
                     "message": (
                         f"{incident['endpoint']} took "
@@ -116,6 +116,8 @@ class TraceAgent(BaseAgent):
                 findings.append({
                     "severity": "MEDIUM",
                     "confidence": 85,
+                    "category": "Performance",
+                    "root_service": incident["service"],
                     "type": "Slow API",
                     "message": (
                         f"{incident['endpoint']} took "
@@ -129,6 +131,8 @@ class TraceAgent(BaseAgent):
                 findings.append({
                     "severity": "LOW",
                     "confidence": 70,
+                    "category": "Performance",
+                    "root_service": incident["service"],
                     "type": "Performance Warning",
                     "message": (
                         f"{incident['endpoint']} took "
@@ -137,34 +141,53 @@ class TraceAgent(BaseAgent):
                     "trace": incident
                 })
 
-            # ----------------------------------------
+            # -------------------------------------------------
             # HTTP Status Detection
-            # ----------------------------------------
+            # (Independent from Performance Detection)
+            # -------------------------------------------------
 
             if status.startswith("5"):
 
                 findings.append({
+
                     "severity": "CRITICAL",
+
                     "confidence": 98,
+
+                    "category": "Application",
+
+                    "root_service": incident["service"],
+
                     "type": "Server Error",
+
                     "message": (
-                        f"{incident['endpoint']} returned "
-                        f"{status}"
+                        f"{incident['endpoint']} returned {status}"
                     ),
+
                     "trace": incident
+
                 })
 
-            elif status.startswith("4"):
+            if status.startswith("4"):
 
                 findings.append({
+
                     "severity": "MEDIUM",
+
                     "confidence": 80,
+
+                    "category": "Application",
+
+                    "root_service": incident["service"],
+
                     "type": "Client Error",
+
                     "message": (
-                        f"{incident['endpoint']} returned "
-                        f"{status}"
+                        f"{incident['endpoint']} returned {status}"
                     ),
+
                     "trace": incident
+
                 })
 
         return findings
