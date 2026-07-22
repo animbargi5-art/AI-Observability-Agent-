@@ -24,8 +24,6 @@ pprint(result["report"])
 
 print("\nRAW RESULTS\n")
 
-pprint(result["raw_results"])
-
 print("\nMEMORY\n")
 
 pprint(result["memory"].__dict__)

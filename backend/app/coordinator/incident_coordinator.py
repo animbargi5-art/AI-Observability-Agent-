@@ -1,6 +1,7 @@
 from datetime import datetime
 import time
 
+from app.services.investigation_service import InvestigationService
 from app.memory.investigation_memory import InvestigationMemory
 from app.orchestration.investigation_orchestrator import InvestigationOrchestrator
 
@@ -19,6 +20,8 @@ class IncidentCoordinator:
             self
         )
 
+        self.investigation_service = InvestigationService()
+
     def start_investigation(self):
 
         print("=" * 60)
@@ -29,10 +32,18 @@ class IncidentCoordinator:
 
         report = self.orchestrator.run()
 
+        saved = self.investigation_service.save(report)
+
         execution_time = round(
             time.time() - start_time,
             3
         )
+
+        print("\n========== DATABASE ==========")
+
+        print(f"Saved Investigation ID : {saved.id}")
+
+        print("==============================\n")
 
         return {
 

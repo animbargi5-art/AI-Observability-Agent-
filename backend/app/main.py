@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 
+from fastapi.middleware.cors import CORSMiddleware
+
 from app.api.health import router as health_router
 from app.api.root import router as root_router
 from app.api.investigation import router as investigation_router
@@ -12,6 +14,16 @@ app = FastAPI(
     title=settings.APP_NAME,
     description="Evidence-Driven Incident Intelligence",
     version=settings.APP_VERSION,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(root_router)
