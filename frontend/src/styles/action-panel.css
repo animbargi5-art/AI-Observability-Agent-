@@ -1,0 +1,71 @@
+.action-panel {
+
+    background: white;
+
+    margin-top: 30px;
+
+    padding: 24px;
+
+    border-radius: 16px;
+
+    box-shadow: 0 4px 12px rgba(0,0,0,.08);
+
+}
+
+.action-panel h2 {
+
+    margin-bottom: 20px;
+
+}
+
+.action-buttons {
+
+    display: flex;
+
+    gap: 16px;
+
+}
+
+.action-buttons button {
+
+    border: none;
+
+    padding: 12px 22px;
+
+    border-radius: 10px;
+
+    cursor: pointer;
+
+    font-size: 15px;
+
+    font-weight: 600;
+
+}
+
+.refresh-btn {
+
+    background: #2563eb;
+
+    color: white;
+
+}
+
+.refresh-btn:hover {
+
+    background: #1d4ed8;
+
+}
+
+.delete-btn {
+
+    background: #dc2626;
+
+    color: white;
+
+}
+
+.delete-btn:hover {
+
+    background: #b91c1c;
+
+}
