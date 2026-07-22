@@ -1,6 +1,6 @@
-import "../../styles/severity-filter.css";
+import "../../styles/status-filter.css";
 
-export default function SeverityFilter({
+export default function StatusFilter({
 
     value,
 
@@ -10,11 +10,11 @@ export default function SeverityFilter({
 
     return (
 
-        <div className="severity-filter">
+        <div className="status-filter">
 
             <label>
 
-                Severity
+                Status
 
             </label>
 
@@ -36,27 +36,27 @@ export default function SeverityFilter({
 
                 </option>
 
-                <option value="HIGH">
+                <option value="INVESTIGATING">
 
-                    HIGH
-
-                </option>
-
-                <option value="MEDIUM">
-
-                    MEDIUM
+                    INVESTIGATING
 
                 </option>
 
-                <option value="LOW">
+                <option value="NO_ISSUE">
 
-                    LOW
+                    NO_ISSUE
 
                 </option>
 
-                <option value="NONE">
+                <option value="RESOLVED">
 
-                    NONE
+                    RESOLVED
+
+                </option>
+
+                <option value="FAILED">
+
+                    FAILED
 
                 </option>
 

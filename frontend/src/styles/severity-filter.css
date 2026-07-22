@@ -1,0 +1,43 @@
+.severity-filter {
+
+    margin-bottom: 20px;
+
+}
+
+.severity-filter label {
+
+    display: block;
+
+    margin-bottom: 8px;
+
+    font-weight: 600;
+
+    color: #374151;
+
+}
+
+.severity-filter select {
+
+    width: 100%;
+
+    padding: 12px 16px;
+
+    border: 1px solid #d1d5db;
+
+    border-radius: 10px;
+
+    background: white;
+
+    font-size: 15px;
+
+    cursor: pointer;
+
+    outline: none;
+
+}
+
+.severity-filter select:focus {
+
+    border-color: #2563eb;
+
+}

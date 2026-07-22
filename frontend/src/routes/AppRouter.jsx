@@ -6,6 +6,7 @@ import DashboardPage from "../pages/DashboardPage";
 import HistoryPage from "../pages/HistoryPage";
 import InvestigationPage from "../pages/InvestigationPage";
 import SettingsPage from "../pages/SettingsPage";
+import ReportsPage from "../pages/ReportPage";
 
 export default function AppRouter() {
 
@@ -33,6 +34,11 @@ export default function AppRouter() {
                 <Route
                     path="/investigation/:id"
                     element={<InvestigationPage />}
+                />
+
+                <Route
+                    path="/reports"
+                    element={<ReportsPage/>}
                 />
 
             </Routes>
