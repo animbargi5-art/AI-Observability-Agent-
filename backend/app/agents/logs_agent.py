@@ -27,6 +27,9 @@ class LogsAgent(BaseAgent):
 
         logs = self.fetch_logs()
 
+        print("\n========== LOGS ==========")
+        print(logs)
+
         return self.analyze(logs)
 
     def analyze(self, logs):

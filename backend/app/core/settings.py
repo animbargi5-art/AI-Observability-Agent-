@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     SIGNOZ_URL: str
     SIGNOZ_SERVICE_ACCOUNT_KEY: str = ""
 
-    OTEL_EXPORTER_OTLP_ENDPOINT: str = "http://localhost:4317"
+    OTEL_EXPORTER_OTLP_ENDPOINT: str = "signoz-ingester-1.4317"
     OTEL_SERVICE_NAME: str = "tattva-ai-backend"
 
     HOST: str = "0.0.0.0"

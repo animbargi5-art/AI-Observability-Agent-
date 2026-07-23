@@ -1,0 +1,61 @@
+.root-cause-panel{
+
+    background:white;
+
+    border-radius:20px;
+
+    padding:30px;
+
+    margin-bottom:30px;
+
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+
+}
+
+.root-cause-panel h2{
+
+    margin-bottom:25px;
+
+}
+
+.root-cause-card{
+
+    display:grid;
+
+    grid-template-columns:repeat(2,1fr);
+
+    gap:20px;
+
+}
+
+.root-cause-item{
+
+    background:#f6f8fc;
+
+    padding:20px;
+
+    border-radius:12px;
+
+}
+
+.root-cause-item span{
+
+    display:block;
+
+    color:#666;
+
+    margin-bottom:10px;
+
+}
+
+.root-cause-item strong{
+
+    font-size:20px;
+
+}
+
+.root-cause-item.full{
+
+    grid-column:1/3;
+
+}

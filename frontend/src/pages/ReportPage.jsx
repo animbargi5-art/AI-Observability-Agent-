@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import ReportStatCard from "../components/Reports/ReportStatCard";
 import SeverityChart from "../components/Reports/SeverityChart";
 import StatusChart from "../components/Reports/StatusChart";
+import TrendChart from "../components/Reports/TrendChart";
 
 import { getAllInvestigations } from "../services/investigationService";
 
@@ -118,6 +119,17 @@ export default function ReportsPage() {
 
     ];
 
+    const trendData = investigations
+        .sort(
+            (a, b) =>
+                new Date(a.created_at) -
+                new Date(b.created_at)
+        )
+        .map(item => ({
+            date: new Date(item.created_at).toLocaleDateString(),
+            investigations: 1
+        }));
+
     return (
 
         <div className="reports-page">
@@ -163,6 +175,10 @@ export default function ReportsPage() {
 
             <StatusChart
                 data={statusData}
+            />
+
+            <TrendChart
+                data={trendData}
             />
 
         </div>

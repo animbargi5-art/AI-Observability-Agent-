@@ -1,0 +1,43 @@
+.incident-summary{
+
+    background:white;
+
+    padding:30px;
+
+    border-radius:16px;
+
+    box-shadow:0 5px 20px rgba(0,0,0,.08);
+
+    margin-bottom:30px;
+
+}
+
+.summary-grid{
+
+    margin-top:20px;
+
+    display:grid;
+
+    grid-template-columns:repeat(3,1fr);
+
+    gap:25px;
+
+}
+
+.summary-grid strong{
+
+    display:block;
+
+    margin-bottom:8px;
+
+    color:#555;
+
+}
+
+.summary-grid p{
+
+    font-size:20px;
+
+    font-weight:bold;
+
+}

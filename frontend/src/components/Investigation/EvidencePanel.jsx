@@ -14,7 +14,7 @@ export default function EvidencePanel({
 
             <h2>
 
-                Evidence
+                Investigation Evidence
 
             </h2>
 
@@ -46,17 +46,135 @@ export default function EvidencePanel({
 
                         >
 
-                            <h3>
+                            <div className="evidence-header">
 
-                                {item.type}
+                                <h3>
 
-                            </h3>
+                                    {item.type}
 
-                            <p>
+                                </h3>
 
-                                Severity: {item.severity}
+                                <span
+                                    className={`severity-badge ${item.severity?.toLowerCase()}`}
+                                >
+                                    {item.severity}
+                                </span>
 
-                            </p>
+                            </div>
+
+                            <div className="evidence-content">
+
+                                <p>
+
+                                    <strong>Category:</strong>
+
+                                    {" "}
+
+                                    {item.category}
+
+                                </p>
+
+                                <p>
+
+                                    <strong>Confidence:</strong>
+
+                                    {" "}
+
+                                    {item.confidence}%
+
+                                </p>
+
+                                <p>
+
+                                    <strong>Message:</strong>
+
+                                    {" "}
+
+                                    {item.message}
+
+                                </p>
+
+                                <p>
+
+                                    <strong>Service:</strong>
+
+                                    {" "}
+
+                                    {item.root_service || "Unknown"}
+
+                                </p>
+
+                                {
+
+                                    item.trace && (
+
+                                        <>
+
+                                            <hr />
+
+                                            <h4>
+
+                                                Trace Information
+
+                                            </h4>
+
+                                            <p>
+
+                                                <strong>Endpoint:</strong>
+
+                                                {" "}
+
+                                                {item.trace.endpoint || "N/A"}
+
+                                            </p>
+
+                                            <p>
+
+                                                <strong>HTTP Method:</strong>
+
+                                                {" "}
+
+                                                {item.trace.method || "N/A"}
+
+                                            </p>
+
+                                            <p>
+
+                                                <strong>Status:</strong>
+
+                                                {" "}
+
+                                                {item.trace.status || "N/A"}
+
+                                            </p>
+
+                                            <p>
+
+                                                <strong>Duration:</strong>
+
+                                                {" "}
+
+                                                {item.trace.duration_ms ?? "N/A"} ms
+
+                                            </p>
+
+                                            <p>
+
+                                                <strong>Trace ID:</strong>
+
+                                                {" "}
+
+                                                {item.trace.trace_id || "N/A"}
+
+                                            </p>
+
+                                        </>
+
+                                    )
+
+                                }
+
+                            </div>
 
                         </div>
 

@@ -2,16 +2,38 @@ export default function StatisticsCards({ investigations }) {
 
     const total = investigations.length;
 
+    const critical = investigations.filter(
+        item => item.severity === "CRITICAL"
+    ).length;
+
     const high = investigations.filter(
         item => item.severity === "HIGH"
+    ).length;
+
+    const medium = investigations.filter(
+        item => item.severity === "MEDIUM"
     ).length;
 
     const low = investigations.filter(
         item => item.severity === "LOW"
     ).length;
 
-    const none = investigations.filter(
+    const noIssue = investigations.filter(
         item => item.severity === "NONE"
+    ).length;
+
+    const avgConfidence =
+        total === 0
+            ? 0
+            : Math.round(
+                investigations.reduce(
+                    (sum, item) => sum + item.confidence,
+                    0
+                ) / total
+            );
+
+    const investigating = investigations.filter(
+        item => item.status === "INVESTIGATING"
     ).length;
 
     return (
@@ -19,35 +41,43 @@ export default function StatisticsCards({ investigations }) {
         <div className="statistics-container">
 
             <div className="stat-card">
-
-                <h3>Total</h3>
-
+                <h3>Total Investigations</h3>
                 <p>{total}</p>
-
             </div>
 
-            <div className="stat-card">
+            <div className="stat-card critical">
+                <h3>Critical</h3>
+                <p>{critical}</p>
+            </div>
 
+            <div className="stat-card high">
                 <h3>High</h3>
-
                 <p>{high}</p>
-
             </div>
 
-            <div className="stat-card">
+            <div className="stat-card medium">
+                <h3>Medium</h3>
+                <p>{medium}</p>
+            </div>
 
+            <div className="stat-card low">
                 <h3>Low</h3>
-
                 <p>{low}</p>
-
             </div>
 
             <div className="stat-card">
-
                 <h3>No Issue</h3>
+                <p>{noIssue}</p>
+            </div>
 
-                <p>{none}</p>
+            <div className="stat-card">
+                <h3>Investigating</h3>
+                <p>{investigating}</p>
+            </div>
 
+            <div className="stat-card">
+                <h3>Average Confidence</h3>
+                <p>{avgConfidence}%</p>
             </div>
 
         </div>

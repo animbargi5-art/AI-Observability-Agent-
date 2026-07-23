@@ -1,0 +1,33 @@
+.progress-panel{
+
+    background:white;
+
+    padding:25px;
+
+    margin-bottom:30px;
+
+    border-radius:15px;
+
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+
+}
+
+.progress-panel h2{
+
+    margin-bottom:20px;
+
+}
+
+.progress-panel p{
+
+    margin:12px 0;
+
+    padding:10px;
+
+    background:#f3f4f6;
+
+    border-left:5px solid #2563eb;
+
+    border-radius:8px;
+
+}

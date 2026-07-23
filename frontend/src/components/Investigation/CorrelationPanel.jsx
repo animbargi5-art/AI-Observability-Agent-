@@ -1,0 +1,100 @@
+import "../../styles/correlation-panel.css";
+
+export default function CorrelationPanel({ investigation }) {
+
+    if (!investigation) {
+        return null;
+    }
+
+    const correlations = investigation.report?.correlations || [];
+
+    return (
+
+        <div className="correlation-panel">
+
+            <h2>Correlation Analysis</h2>
+
+            {
+                correlations.length === 0 ?
+
+                (
+                    <p>No correlations available.</p>
+                )
+
+                :
+
+                (
+                    correlations.map((item, index) => (
+
+                        <div
+                            key={index}
+                            className="correlation-card"
+                        >
+
+                            <div className="correlation-header">
+
+                                <h3>{item.service}</h3>
+
+                                <span className={`severity ${item.severity?.toLowerCase()}`}>
+                                    {item.severity}
+                                </span>
+
+                            </div>
+
+                            <p>
+
+                                <strong>Total Findings:</strong>
+
+                                {" "}
+
+                                {item.total_findings}
+
+                            </p>
+
+                            <div className="correlation-section">
+
+                                <strong>Finding Types</strong>
+
+                                <ul>
+
+                                    {
+                                        item.finding_types.map((type, i) => (
+
+                                            <li key={i}>{type}</li>
+
+                                        ))
+                                    }
+
+                                </ul>
+
+                            </div>
+
+                            <div className="correlation-section">
+
+                                <strong>Possible Causes</strong>
+
+                                <ul>
+
+                                    {
+                                        item.possible_causes.map((cause, i) => (
+
+                                            <li key={i}>{cause}</li>
+
+                                        ))
+                                    }
+
+                                </ul>
+
+                            </div>
+
+                        </div>
+
+                    ))
+                )
+            }
+
+        </div>
+
+    );
+
+}

@@ -7,20 +7,21 @@ class CorrelationEngine:
     """
 
     def __init__(self, memory: InvestigationMemory):
-
         self.memory = memory
 
     def run(self):
 
         evidence = self.memory.evidence
 
-        print(f"Collected Evidence: {len(evidence)}")
+        print(f"\nCollected Evidence: {len(evidence)}")
 
         correlated = []
 
         service_correlations = {}
 
-        category_groups = {}
+        # ----------------------------------------
+        # Group findings by service
+        # ----------------------------------------
 
         for finding in evidence:
 
@@ -32,8 +33,6 @@ class CorrelationEngine:
                 or "Unknown"
             )
 
-            category = finding.get("category", "General")
-
             duration = trace.get("duration_ms", 0)
 
             service_correlations.setdefault(
@@ -41,34 +40,26 @@ class CorrelationEngine:
                 {
                     "service": service,
                     "findings": [],
-                    "possible_causes":set()
+                    "possible_causes": set()
                 }
             )
 
             service_correlations[service]["findings"].append(finding)
 
-            category_groups.setdefault(category, []).append(finding)
+            # ----------------------------------------
+            # Basic Rule Engine
+            # ----------------------------------------
 
-            causes = []
-
-            # Slow request correlation
             if duration > 2000:
-                causes.append(
-                    "Blocking operation or expensive processing detected."
-                )
-             
+
                 service_correlations[service]["possible_causes"].add(
                     "Blocking operation or expensive processing detected."
                 )
 
-            # GET endpoint correlation
             if trace.get("method") == "GET":
-                causes.append(
-                    "Review endpoint implementation and downstream dependencies."
-                )
 
                 service_correlations[service]["possible_causes"].add(
-                    "Review endpoint implementation and downstream dependencies"
+                    "Review endpoint implementation and downstream dependencies."
                 )
 
             if finding.get("type") == "Application Error":
@@ -83,29 +74,81 @@ class CorrelationEngine:
                     "Traffic surge may be affecting performance."
                 )
 
-            for service, data in service_correlations.items():
+        # ----------------------------------------
+        # Build Final Correlations
+        # ----------------------------------------
 
-                findings = data["findings"]
+        priority = {
+            "CRITICAL": 4,
+            "HIGH": 3,
+            "MEDIUM": 2,
+            "LOW": 1,
+            "ERROR": 4,
+        }
 
-                severities = [
-                    finding.get("severity", "LOW")
-                    for finding in findings
+        for service, data in service_correlations.items():
+
+            findings = data["findings"]
+
+            severities = [
+                finding.get("severity", "LOW")
+                for finding in findings
+            ]
+
+            highest = max(
+                severities,
+                key=lambda x: priority.get(x, 1)
+            )
+
+            # ----------------------------------------
+            # Advanced Correlation Rules
+            # ----------------------------------------
+
+            has_error = any(
+                f.get("type") == "Application Error"
+                for f in findings
+            )
+
+            has_server_error = any(
+                f.get("type") == "Server Error"
+                for f in findings
+            )
+
+            has_slow = any(
+                f.get("type") in [
+                    "Slow API",
+                    "Critical Slow API",
+                    "Performance Warning"
                 ]
+                for f in findings
+            )
 
-                priority = {
-                    "CRITICAL": 4,
-                    "HIGH": 3,
-                    "MEDIUM": 2,
-                    "LOW": 1,
-                    "ERROR": 4,
-                }
+            has_traffic = any(
+                f.get("type") == "Traffic Spike"
+                for f in findings
+            )
 
-                highest = max(
-                    severities,
-                    key=lambda x: priority.get(x, 1)
+            if has_error and has_slow:
+
+                data["possible_causes"].add(
+                    "Unhandled application exception is causing slow API responses."
                 )
 
-                correlated.append({
+            if has_server_error and has_slow:
+
+                data["possible_causes"].add(
+                    "Server errors are increasing request latency."
+                )
+
+            if has_traffic and has_slow:
+
+                data["possible_causes"].add(
+                    "High traffic may be causing request queue buildup."
+                )
+
+            correlated.append(
+
+                {
 
                     "service": service,
 
@@ -113,23 +156,63 @@ class CorrelationEngine:
 
                     "total_findings": len(findings),
 
-                    "finding_types": [
-                        finding.get("type")
-                        for finding in findings
-                    ],
+                    "finding_types": list(
+                        {
+                            finding.get("type")
+                            for finding in findings
+                        }
+                    ),
 
                     "possible_causes": sorted(
                         list(data["possible_causes"])
-                    )
+                    ),
 
-                })
+                    "evidence": findings
 
-        # Store correlations inside shared memory
+                }
+
+            )
+
+        # ----------------------------------------
+        # Save into shared memory
+        # ----------------------------------------
+
         self.memory.correlations = correlated
+
+        # ----------------------------------------
+        # Debug Output
+        # ----------------------------------------
+
+        print("\n==============================")
+        print("Correlated Incidents")
+        print("==============================")
+
+        for incident in correlated:
+
+            print()
+
+            print(f"Service : {incident['service']}")
+
+            print(f"Severity : {incident['severity']}")
+
+            print(f"Findings : {incident['total_findings']}")
+
+            print("Types :")
+
+            for t in incident["finding_types"]:
+                print(f"   - {t}")
+
+            print("Possible Causes :")
+
+            for cause in incident["possible_causes"]:
+                print(f"   - {cause}")
+
+        print("==============================\n")
 
         return {
 
             "total_correlations": len(correlated),
 
             "correlations": correlated
+
         }

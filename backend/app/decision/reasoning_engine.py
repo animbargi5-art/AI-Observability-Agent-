@@ -189,6 +189,52 @@ class ReasoningEngine:
                 f"{len(suspicious_services)} high-priority incidents detected."
             )
 
+        # -------------------------------------
+        # AI Investigation Conclusions
+        # -------------------------------------
+
+        conclusions = []
+
+        if highest_severity == "CRITICAL":
+            conclusions.append(
+                "Critical incidents require immediate attention."
+            )
+
+        if finding_counter.get("Application Error", 0) > 0:
+            conclusions.append(
+                "Application exceptions were detected in the backend."
+            )
+
+        if (
+            finding_counter.get("Critical Slow API", 0) > 0
+            or finding_counter.get("Slow API", 0) > 0
+        ):
+            conclusions.append(
+                "Slow API responses indicate possible blocking operations or overloaded services."
+            )
+
+        if finding_counter.get("Traffic Spike", 0) > 0:
+            conclusions.append(
+                "Traffic spikes may be contributing to degraded performance."
+            )
+
+        if suspicious_services:
+
+            affected = {
+                service["service"]
+                for service in suspicious_services
+            }
+
+            conclusions.append(
+                "Primary affected service(s): "
+                + ", ".join(sorted(affected))
+            )
+
+        if not conclusions:
+            conclusions.append(
+                "No significant incidents detected."
+            )
+
         return {
 
             "graph_nodes": len(nodes),
@@ -202,6 +248,8 @@ class ReasoningEngine:
             "suspicious_services": suspicious_services,
 
             "reasoning": reasoning,
+            
+            "conclusions": conclusions,
 
             "evidence_count": len(evidence),
 

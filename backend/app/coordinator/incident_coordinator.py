@@ -4,6 +4,7 @@ import time
 from app.services.investigation_service import InvestigationService
 from app.memory.investigation_memory import InvestigationMemory
 from app.orchestration.investigation_orchestrator import InvestigationOrchestrator
+from app.services.telemetry_service import TelemetryService
 
 
 class IncidentCoordinator:
@@ -22,6 +23,8 @@ class IncidentCoordinator:
 
         self.investigation_service = InvestigationService()
 
+        self.telemetry_service = TelemetryService()
+
     def start_investigation(self):
 
         print("=" * 60)
@@ -29,6 +32,18 @@ class IncidentCoordinator:
         print("=" * 60)
 
         start_time = time.time()
+
+        traces = self.telemetry_service.get_traces()
+
+        metrics = self.telemetry_service.get_metrics()
+
+        logs = self.telemetry_service.get_logs()
+
+        print(f"Collected {len(traces)} traces")
+
+        print(f"Collected {len(metrics)} metrics")
+
+        print(f"Collected {len(logs)} logs")
 
         report = self.orchestrator.run()
 
