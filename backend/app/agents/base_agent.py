@@ -14,7 +14,7 @@ class BaseAgent(ABC):
         self.description = description
         self.version = "1.0.0"
 
-    def before_run(self):
+    async def before_run(self):
         """
         Called before the agent starts executing.
         """
@@ -26,7 +26,7 @@ class BaseAgent(ABC):
         print("=" * 60)
 
     @abstractmethod
-    def execute(self):
+    async def execute(self):
         """
         Main logic of the agent.
 
@@ -34,7 +34,7 @@ class BaseAgent(ABC):
         """
         pass
 
-    def after_run(self):
+    async def after_run(self):
         """
         Called after successful execution.
         """
@@ -49,18 +49,18 @@ class BaseAgent(ABC):
         print(f"Execution Time : {elapsed} seconds")
         print("-" * 60)
 
-    def run(self):
+    async def run(self):
         """
         Standard execution flow used by every agent.
         """
 
-        self.before_run()
+        await self.before_run()
 
         try:
 
-            result = self.execute()
+            result = await self.execute()
 
-            self.after_run()
+            await self.after_run()
 
             return result
 

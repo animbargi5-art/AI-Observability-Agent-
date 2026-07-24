@@ -1,342 +1,117 @@
-import time
-import requests
-
-from app.core.settings import settings
+from app.mcp.session import MCPSession
 
 
 class SigNozService:
 
     def __init__(self):
-        self.base_url = settings.SIGNOZ_URL
+        self.mcp = MCPSession()
 
-    def _headers(self):
-        headers = {
-            "Content-Type": "application/json",
-            "SIGNOZ-API-KEY": settings.SIGNOZ_SERVICE_ACCOUNT_KEY
-        }
+    async def ensure_connected(self):
+        if self.mcp.session is None:
+            await self.mcp.connect()
 
-        print("\n========== HEADERS ==========")
-        print(headers)
-        print("=============================\n")
+    async def connect(self):
+        await self.ensure_connected()
 
-        return headers
+    async def disconnect(self):
+        await self.mcp.disconnect()
 
-    def _time_range(self):
-        """
-        Return the last one hour in nanoseconds.
-        """
+    async def list_metrics(
+        self,
+        search_context: str = "List all available metrics.",
+        time_range: str = "24h",
+        limit: int = 100,
+    ):
+        await self.ensure_connected()
 
-        end = int(time.time() * 1_000_000_000)
-        start = end - (60 * 60 * 1_000_000_000)
-
-        return start, end
-
-    def get_services(self):
-
-        start, end = self._time_range()
-
-        url = f"{self.base_url}/api/v2/services"
-
-        payload = {
-            "start": str(start),
-            "end": str(end),
-            "tags": []
-        }
-
-        print("\n========== REQUEST ==========")
-        print("Base URL:", self.base_url)
-        print("URL:", url)
-        print("Payload:", payload)
-        print(
-            "Service Account Key Loaded:",
-            bool(settings.SIGNOZ_SERVICE_ACCOUNT_KEY)
+        return await self.mcp.call_tool(
+            "signoz_list_metrics",
+            {
+                "searchContext": search_context,
+                "timeRange": time_range,
+                "limit": limit,
+            },
         )
 
-        if settings.SIGNOZ_SERVICE_ACCOUNT_KEY:
-            print(
-                "Key Prefix:",
-                settings.SIGNOZ_SERVICE_ACCOUNT_KEY[:20] + "..."
-            )
+    async def list_services(self):
+        await self.ensure_connected()
 
-        response = requests.post(
-            url=url,
-            headers=self._headers(),
-            json=payload,
-            timeout=30
+        return await self.mcp.call_tool(
+            "signoz_list_services",
+            {
+                "searchContext": "List all services in my SigNoz instance.",
+                "timeRange": "24h",
+            },
         )
 
-        print("\n========== RESPONSE ==========")
-        print("Status Code:", response.status_code)
-        print("Response Body:")
-        print(response.text)
-        print("==============================\n")
+    async def search_logs(
+        self,
+        query: str = "",
+        limit: int = 100,
+    ):
+        await self.ensure_connected()
 
-        response.raise_for_status()
-
-        return response.json()
-
-    def get_traces(self):
-
-        start, end = self._time_range()
-
-        url = f"{self.base_url}/api/v5/query_range"
-
-        payload = {
-            "schemaVersion": "v1",
-            "start": start,
-            "end": end,
-            "requestType": "raw",
-            "compositeQuery": {
-                "queries": [
-                    {
-                        "type": "builder_query",
-                        "spec": {
-                            "name": "A",
-                            "signal": "traces",
-                            "stepInterval": None,
-                            "disabled": False,
-                            "filter": {
-                                "expression": ""
-                            },
-                            "limit": 10,
-                            "offset": 0,
-                            "order": [
-                                {
-                                    "key": {
-                                        "name": "timestamp"
-                                    },
-                                    "direction": "desc"
-                               }
-                            ],
-                            "having": {
-                                "expression": ""
-                            },
-                            "selectFields": [
-                                {
-                                    "name": "service.name",
-                                    "fieldDataType": "string",
-                                    "signal": "traces",
-                                    "fieldContext": "resource"
-                                },
-                                {
-                                    "name": "name",
-                                    "fieldDataType": "string",
-                                    "signal": "traces"
-                                },
-                                {
-                                    "name": "duration_nano",
-                                    "fieldDataType": "",
-                                    "signal": "traces",
-                                    "fieldContext": "span"
-                                },
-                                {    
-                                    "name": "http_method",
-                                    "fieldDataType": "",
-                                    "signal": "traces",
-                                    "fieldContext": "span"
-                                },
-                                {
-                                    "name": "response_status_code",
-                                    "fieldDataType": "",
-                                    "signal": "traces",
-                                    "fieldContext": "span"
-                                }
-                            ]
-                        }
-                   }
-                ]
+        return await self.mcp.call_tool(
+            "signoz_search_logs",
+            {
+                "searchContext": "Search application logs.",
+                "query": query,
+                "timeRange": "24h",
+                "limit": limit,
             },
-            "formatOptions": {
-                "formatTableResultForUI": False,
-                "fillGaps": False
-            },
-            "variables": {}
-        }
-
-        response = requests.post(
-            url=url,
-            headers=self._headers(),
-            json=payload,
-            timeout=30
         )
 
-        print("Status:", response.status_code)
-        print(response.text)
+    async def search_traces(
+        self,
+        limit: int = 50,
+    ):
+        await self.ensure_connected()
 
-        response.raise_for_status()
-
-        return response.json()
-
-    def get_logs(self):
-
-        start, end = self._time_range()
-
-        url = f"{self.base_url}/api/v5/query_range"
-
-        payload = {
-            "schemaVersion": "v1",
-            "start": start,
-            "end": end,
-            "requestType": "raw",
-            "compositeQuery": {
-                "queries": [
-                    {
-                        "type": "builder_query",
-                        "spec": {
-                            "name": "A",
-                            "signal": "logs",
-                            "stepInterval": None,
-                            "disabled": False,
-                            "filter": {
-                                "expression": ""
-                            },
-                            "limit": 100,
-                            "offset": 0,
-                            "order": [
-                                {
-                                    "key": {
-                                        "name": "timestamp"
-                                    },
-                                    "direction": "desc"
-                               },
-                               {
-                                    "key": {
-                                        "name": "id"
-                                    },
-                                    "direction": "desc"
-                                }
-                            ],
-                            "having": {
-                                "expression": ""
-                            }
-                        }
-                    }
-                ]   
+        return await self.mcp.call_tool(
+            "signoz_search_traces",
+            {
+                "searchContext": "Search traces.",
+                "timeRange": "24h",
+                "limit": limit,
             },
-            "formatOptions": {
-                "formatTableResultForUI": False,
-                "fillGaps": False
-            },
-            "variables": {}
-        }
-
-        response = requests.post(
-            url=url,
-            headers=self._headers(),
-            json=payload,
-            timeout=30
         )
 
-        print("Status:", response.status_code)
-        print(response.text)
+    async def list_dashboards(self):
+        await self.ensure_connected()
 
-        response.raise_for_status()
-
-        return response.json()
-
-    def get_metrics(self):
-
-        start, end = self._time_range()
-
-        url = f"{self.base_url}/api/v5/query_range"
-
-        payload = {
-            "schemaVersion": "v1",
-            "start": start,
-            "end": end,
-            "requestType": "time_series",
-            "compositeQuery": {
-                "queries": [
-                    {
-                        "type": "builder_query",
-                        "spec": {
-                            "name": "A",
-                            "signal": "metrics",
-                            "source": "",
-                            "stepInterval": None,
-                            "disabled": False,
-                            "filter": {
-                                "expression": ""
-                            },
-                            "having": {
-                                "expression": ""
-                            },
-                            "aggregations": [
-                                {
-                                    "metricName": "http.server.duration.count",
-                                    "timeAggregation": "sum",
-                                    "spaceAggregation": "sum"
-                                }
-                            ]
-                        }
-                    }
-                ]
+        return await self.mcp.call_tool(
+            "signoz_list_dashboards",
+            {
+                "searchContext": "List all dashboards.",
             },
-            "formatOptions": {
-                "formatTableResultForUI": False,
-                "fillGaps": False
+        )
+
+    async def list_alerts(self):
+        await self.ensure_connected()
+
+        return await self.mcp.call_tool(
+            "signoz_list_alerts",
+            {
+                "searchContext": "List all alerts.",
             },
-            "variables": {}
-        }  
-        print("\n========== METRICS REQUEST ==========")
-        print("URL:", url)
-        print("Payload:")
-        print(payload)
-        print("=====================================\n")
+        )
 
-        try:
-            response = requests.post(
-                url=url,
-                headers=self._headers(),
-                json=payload,
-                timeout=30
-            )
+    async def list_notification_channels(self):
+        await self.ensure_connected()
 
-            print("\n========== METRICS RESPONSE ==========")
-            print("Status:", response.status_code)
-            print("Response:")
-            print(response.text)
-            print("======================================\n")
+        return await self.mcp.call_tool(
+            "signoz_list_notification_channels",
+            {
+                "searchContext": "List all notification channels.",
+            },
+        )
 
-            response.raise_for_status()
+    async def list_views(self):
+        await self.ensure_connected()
 
-            return response.json()
-        
-        except requests.exceptions.RequestException as ex:
-
-            print("Metrics API Error")
-            print(ex)
-
-            return {
-                "status": "error",
-                "message": str(ex),
-                "data": None
-            }
-
-    def get_dependencies(self):
-        """
-        Retrieve service dependency information.
-
-        Currently returns an empty list because the local SigNoz
-        instance has no service dependency graph yet.
-        This method can later be replaced with the actual
-        SigNoz API implementation.
-        """
-
-        return {
-            "status": "success",
-            "dependencies": []
-        }
-    
-    def get_alerts(self):
-        """
-        Retrieve alerts from SigNoz.
-
-        Currently returns an empty list because there are
-        no alert rules configured in the local SigNoz instance.
-        """
-
-        return {
-            "status": "success",
-            "alerts": []
-        }
+        return await self.mcp.call_tool(
+            "signoz_list_views",
+            {
+                "searchContext": "List all saved views.",
+            },
+        )

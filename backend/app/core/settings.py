@@ -7,9 +7,10 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
 
     SIGNOZ_URL: str
-    SIGNOZ_SERVICE_ACCOUNT_KEY: str = ""
+    SIGNOZ_API_KEY: str = ""
+    SIGNOZ_MCP_SERVER: str
 
-    OTEL_EXPORTER_OTLP_ENDPOINT: str = "signoz-ingester-1.4317"
+    OTEL_EXPORTER_OTLP_ENDPOINT: str = "http://localhost:4317"
     OTEL_SERVICE_NAME: str = "tattva-ai-backend"
 
     HOST: str = "0.0.0.0"

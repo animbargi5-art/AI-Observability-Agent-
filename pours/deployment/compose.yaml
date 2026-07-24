@@ -26,6 +26,19 @@ services:
     volumes:
     - ./ingester/ingester.yaml:/etc/otel-collector-config.yaml:ro
     - ./ingester/opamp.yaml:/etc/opamp-config.yaml:ro
+  signoz-mcp:
+    container_name: signoz-mcp
+    environment:
+    - MCP-SERVER_PORT=8001
+    - MCP_SERVER_PORT=8000
+    - SIGNOZ_URL=http://signoz-signoz-0:8080
+    - TRANSPORT_MODE=http
+    image: signoz/signoz-mcp-server:latest
+    networks:
+    - signoz-network
+    ports:
+    - 8001:8000
+    restart: unless-stopped
   signoz-metastore-postgres-0:
     container_name: signoz-metastore-postgres-0
     environment:

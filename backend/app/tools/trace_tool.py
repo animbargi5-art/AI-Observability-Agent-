@@ -1,17 +1,12 @@
-from app.services.signoz import SigNozService
+import json
+
+from app.services.shared_signoz import signoz
 
 
 class TraceTool:
-    """
-    Engineering Tool responsible for retrieving traces
-    from SigNoz.
-    """
 
     def __init__(self):
-        self.signoz = SigNozService()
+        self.signoz = signoz
 
-    def execute(self):
-        """
-        Fetch raw trace data from SigNoz.
-        """
-        return self.signoz.get_traces()
+    async def execute(self):
+        return await signoz.search_traces()

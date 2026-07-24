@@ -1,14 +1,10 @@
-from app.services.signoz import SigNozService
+from app.services.shared_signoz import signoz
 
 
 class AlertTool:
-    """
-    Engineering Tool responsible for retrieving
-    active alerts from SigNoz.
-    """
 
     def __init__(self):
-        self.signoz = SigNozService()
+        self.signoz = signoz
 
-    def execute(self):
-        return self.signoz.get_alerts()
+    async def execute(self):
+        return await self.signoz.list_alerts()

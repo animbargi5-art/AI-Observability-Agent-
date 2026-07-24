@@ -1,14 +1,18 @@
-from app.services.signoz import SigNozService
+import json
+
+from app.services.shared_signoz import signoz
 
 
 class MetricsTool:
-    """
-    Engineering Tool responsible for retrieving
-    metrics from SigNoz.
-    """
 
     def __init__(self):
-        self.signoz = SigNozService()
+        self.signoz = signoz
 
-    def execute(self):
-        return self.signoz.get_metrics()
+    async def execute(self):
+
+        result = await self.signoz.list_metrics()
+
+        if hasattr(result, "content"):
+            return json.loads(result.content[0].text)
+
+        return result

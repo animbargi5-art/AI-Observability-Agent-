@@ -19,9 +19,9 @@ class HistoricalAgent(BaseAgent):
         else:
             self.memory = memory
 
-    def execute(self):
+    async def execute(self):
 
-        history = self.history_tool.execute()
+        history = await self.history_tool.execute()
 
         findings = []
 

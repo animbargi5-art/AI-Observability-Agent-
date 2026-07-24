@@ -20,12 +20,12 @@ class DependencyAgent(BaseAgent):
         else:
             self.memory = memory
 
-    def fetch_dependencies(self):
-        return self.dependency_tool.execute()
+    async def fetch_dependencies(self):
+        return await self.dependency_tool.execute()
 
-    def execute(self):
+    async def execute(self):
 
-        result = self.fetch_dependencies()
+        result = await self.fetch_dependencies()
 
         dependencies = result.get("dependencies", [])
 

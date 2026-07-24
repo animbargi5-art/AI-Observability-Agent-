@@ -71,7 +71,7 @@ class RootCauseAgent(BaseAgent):
 
         return hypotheses
 
-    def execute(self):
+    async def execute(self):
 
         evidence = self.collect_evidence()
 

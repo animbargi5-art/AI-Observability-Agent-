@@ -19,16 +19,13 @@ class LogsAgent(BaseAgent):
         else:
             self.memory = memory
 
-    def fetch_logs(self):
+    async def fetch_logs(self):
 
-        return self.logs_tool.execute()
+        return await self.logs_tool.execute()
 
-    def execute(self):
+    async def execute(self):
 
-        logs = self.fetch_logs()
-
-        print("\n========== LOGS ==========")
-        print(logs)
+        logs = await self.fetch_logs()
 
         return self.analyze(logs)
 

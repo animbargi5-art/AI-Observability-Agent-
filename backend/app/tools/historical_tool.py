@@ -1,15 +1,12 @@
+from app.services.shared_signoz import signoz
+
+
 class HistoricalTool:
-    """
-    Engineering Tool responsible for retrieving
-    historical investigation data.
 
-    Later this tool will search previous
-    investigations and incidents.
-    """
+    def __init__(self):
+        self.signoz = signoz
 
-    def execute(self):
-
+    async def execute(self):
         return {
-            "status": "success",
             "history": []
         }

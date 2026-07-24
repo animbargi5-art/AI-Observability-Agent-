@@ -14,7 +14,7 @@ class RecommendationAgent(BaseAgent):
         self.memory = memory
         self.reasoning_engine = ReasoningEngine(memory)
 
-    def execute(self):
+    async def execute(self):
 
         incident = self.memory.incident
         evidence = self.memory.evidence

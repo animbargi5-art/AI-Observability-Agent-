@@ -1,17 +1,10 @@
-from app.services.signoz import SigNozService
+from app.services.shared_signoz import signoz
 
 
 class LogsTool:
-    """
-    Engineering Tool responsible for retrieving logs
-    from SigNoz.
-    """
 
     def __init__(self):
-        self.signoz = SigNozService()
+        self.signoz = signoz
 
-    def execute(self):
-        """
-        Fetch raw logs from SigNoz.
-        """
-        return self.signoz.get_logs()
+    async def execute(self):
+        return await self.signoz.search_logs()

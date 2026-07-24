@@ -12,10 +12,9 @@ class ReportAgent(BaseAgent):
         )
 
         self.memory = memory
-
         self.reasoning_engine = ReasoningEngine(memory)
 
-    def execute(self):
+    async def execute(self):
 
         reasoning = self.reasoning_engine.analyze()
 
@@ -45,13 +44,9 @@ class ReportAgent(BaseAgent):
         }
 
         graph = self.memory.graph
-
         evidence = self.memory.evidence
-
         recommendations = self.memory.recommendations
-
         correlations = self.memory.correlations
-
         timeline = self.memory.timeline
 
         statistics = {
@@ -74,17 +69,18 @@ class ReportAgent(BaseAgent):
 
             "incident": self.memory.incident,
 
-            "timeline": self.memory.timeline,
+            "timeline": timeline,
 
-            "evidence": self.memory.evidence,
+            "evidence": evidence,
 
-            "correlations": self.memory.correlations,
+            "correlations": correlations,
 
             "graph": {
 
                 "nodes": graph.get("nodes", []),
 
                 "edges": graph.get("edges", [])
+
             },
 
             "reasoning": reasoning,
@@ -95,11 +91,12 @@ class ReportAgent(BaseAgent):
                 else None
             ),
 
-            "recommendations": self.memory.recommendations,
+            "recommendations": recommendations,
 
             "confidence": self.memory.confidence,
 
             "summary": self.generate_summary(reasoning)
+
         }
 
         self.memory.set_final_report(report)
@@ -120,16 +117,21 @@ class ReportAgent(BaseAgent):
                 "No active incident was detected during the investigation."
             )
 
-        severity = incident.get("severity", "UNKNOWN")
+        severity = incident.get(
+            "severity",
+            "UNKNOWN"
+        )
 
-        title = incident.get("title", "Unknown Incident")
+        title = incident.get(
+            "title",
+            "Unknown Incident"
+        )
 
         services = reasoning.get("services", {})
 
         service_list = ", ".join(services.keys())
 
         if not service_list:
-
             service_list = "Unknown"
 
         return (
@@ -138,14 +140,12 @@ class ReportAgent(BaseAgent):
 
             f"Severity: {severity}. "
 
+            f"Affected Services: {service_list}. "
+
             f"Evidence collected: {len(self.memory.evidence)}. "
 
-            f"Recommendations generated: "
+            f"Recommendations generated: {len(self.memory.recommendations)}. "
 
-            f"{len(self.memory.recommendations)}. "
-
-            f"Confidence Score: "
-
-            f"{self.memory.confidence}%."
+            f"Confidence Score: {self.memory.confidence}%."
 
         )

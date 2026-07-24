@@ -1,4 +1,4 @@
-from app.services.signoz import SigNozService
+from app.services.shared_signoz import signoz
 
 
 class DependencyTool:
@@ -8,7 +8,10 @@ class DependencyTool:
     """
 
     def __init__(self):
-        self.signoz = SigNozService()
+        self.signoz = signoz
 
-    def execute(self):
-        return self.signoz.get_dependencies()
+    async def execute(self):
+
+        return {
+            "dependencies": []
+        }

@@ -6,6 +6,8 @@ from app.memory.investigation_memory import InvestigationMemory
 from app.orchestration.investigation_orchestrator import InvestigationOrchestrator
 from app.services.telemetry_service import TelemetryService
 
+from app.services.shared_signoz import signoz
+
 
 class IncidentCoordinator:
     """
@@ -25,7 +27,7 @@ class IncidentCoordinator:
 
         self.telemetry_service = TelemetryService()
 
-    def start_investigation(self):
+    async def start_investigation(self):
 
         print("=" * 60)
         print("Starting New Investigation")
@@ -33,46 +35,59 @@ class IncidentCoordinator:
 
         start_time = time.time()
 
-        traces = self.telemetry_service.get_traces()
+        # Open ONE MCP connection
+        await signoz.connect()
 
-        metrics = self.telemetry_service.get_metrics()
+        print("Connected session:", signoz.mcp.session)
 
-        logs = self.telemetry_service.get_logs()
+        try:
 
-        print(f"Collected {len(traces)} traces")
+            traces = self.telemetry_service.get_traces()
 
-        print(f"Collected {len(metrics)} metrics")
+            metrics = self.telemetry_service.get_metrics()
 
-        print(f"Collected {len(logs)} logs")
+            logs = self.telemetry_service.get_logs()
 
-        report = self.orchestrator.run()
+            print(f"Collected {len(traces)} traces")
 
-        saved = self.investigation_service.save(report)
+            print(f"Collected {len(metrics)} metrics")
 
-        execution_time = round(
-            time.time() - start_time,
-            3
-        )
+            print(f"Collected {len(logs)} logs")
 
-        print("\n========== DATABASE ==========")
+            report = await self.orchestrator.run()
 
-        print(f"Saved Investigation ID : {saved.id}")
+            saved = self.investigation_service.save(report)
 
-        print("==============================\n")
+            execution_time = round(
+                time.time() - start_time,
+                3
+            )
 
-        return {
+            print("\n========== DATABASE ==========")
 
-            "status": "SUCCESS",
+            print(f"Saved Investigation ID : {saved.id}")
 
-            "timestamp": datetime.utcnow().isoformat(),
+            print("==============================\n")
 
-            "execution_time_seconds": execution_time,
+            return {
 
-            "report": report,
+                "status": "SUCCESS",
 
-            "memory": self.memory
+                "timestamp": datetime.utcnow().isoformat(),
 
-        }
+                "execution_time_seconds": execution_time,
+
+                "report": report,
+
+                "memory": self.memory
+
+            }
+
+        finally:
+
+            # Close the MCP connection exactly once
+            await signoz.disconnect()
+
 
     def build_incident(self):
 

@@ -1,9 +1,14 @@
+import json
+
+from mcp.types import TextContent
+
 from app.agents.base_agent import BaseAgent
 from app.tools.metrics_tool import MetricsTool
 from app.memory.investigation_memory import InvestigationMemory
 
 HIGH_TRAFFIC_THRESHOLD = 30
 MEDIUM_TRAFFIC_THRESHOLD = 15
+
 
 class MetricsAgent(BaseAgent):
     """
@@ -24,22 +29,36 @@ class MetricsAgent(BaseAgent):
         else:
             self.memory = memory
 
-    def fetch_metrics(self):
+    async def fetch_metrics(self):
 
-        return self.metrics_tool.execute()
+        return await self.metrics_tool.execute()
 
-    def execute(self):
+    async def execute(self):
 
-        metrics = self.fetch_metrics()
+        metrics = await self.fetch_metrics()
 
-        if metrics.get("status") == "error":
+        payload = {}
+
+        for item in metrics.content:
+
+            if isinstance(item, TextContent):
+
+                try:
+                    payload = json.loads(item.text)
+                    break
+
+                except Exception:
+                    pass
+
+        if payload.get("status") == "error":
+
             return {
                 "total_metrics": 0,
                 "findings": [],
-                "error": metrics["message"]
+                "error": payload.get("message", "Unknown Error")
             }
 
-        return self.analyze(metrics)
+        return self.analyze(payload)
 
     def analyze(self, metrics):
 
@@ -127,6 +146,7 @@ class MetricsAgent(BaseAgent):
                         "value": value,
                         "timestamp": timestamp
                     }
+
                 })
 
         for finding in findings:
@@ -142,6 +162,7 @@ class MetricsAgent(BaseAgent):
                 finding["confidence"]
                 for finding in findings
             )
+
             self.memory.set_confidence(highest_confidence)
 
         return {

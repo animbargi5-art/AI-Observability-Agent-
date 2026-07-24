@@ -12,12 +12,12 @@ from app.agents.root_cause_agent import RootCauseAgent
 from app.agents.recommendation_agent import RecommendationAgent
 from app.agents.report_agent import ReportAgent
 
+
 class InvestigationOrchestrator:
 
     def __init__(self, memory, coordinator):
 
         self.memory = memory
-
         self.coordinator = coordinator
 
         self.trace_agent = TraceAgent(memory)
@@ -35,9 +35,9 @@ class InvestigationOrchestrator:
         self.recommendation_agent = RecommendationAgent(memory)
         self.report_agent = ReportAgent(memory)
 
-    def run(self):
+    async def run(self):
 
-        self.collect_evidence()
+        await self.collect_evidence()
 
         self.coordinator.build_incident()
 
@@ -45,30 +45,26 @@ class InvestigationOrchestrator:
 
         self.build_graph()
 
-        self.reason()
+        await self.reason()
 
-        self.find_root_cause()
+        await self.find_root_cause()
 
-        self.generate_recommendations()
+        await self.generate_recommendations()
 
-        return self.generate_report()
+        return await self.generate_report()
 
-    def collect_evidence(self):
+    async def collect_evidence(self):
+
         print("\n========== COLLECTING EVIDENCE ==========\n")
 
         results = {}
 
-        results["trace"] = self.trace_agent.run()
-
-        results["logs"] = self.logs_agent.run()
-
-        results["metrics"] = self.metrics_agent.run()
-
-        results["dependency"] = self.dependency_agent.run()
-
-        results["alert"] = self.alert_agent.run()
-
-        results["historical"] = self.historical_agent.run()
+        results["trace"] = await self.trace_agent.run()
+        results["logs"] = await self.logs_agent.run()
+        results["metrics"] = await self.metrics_agent.run()
+        results["dependency"] = await self.dependency_agent.run()
+        results["alert"] = await self.alert_agent.run()
+        results["historical"] = await self.historical_agent.run()
 
         return results
 
@@ -82,28 +78,32 @@ class InvestigationOrchestrator:
 
         print("\n========== BUILDING KNOWLEDGE GRAPH ==========\n")
 
-        return self.graph_builder.build()
+        result = self.graph_builder.build()
 
-    def reason(self):
+        return result
+
+    async def reason(self):
 
         print("\n========== REASONING ==========\n")
 
-        return self.root_cause_agent.reasoning_engine.analyze()
+        result = self.root_cause_agent.reasoning_engine.analyze()
 
-    def find_root_cause(self):
+        return result
+
+    async def find_root_cause(self):
 
         print("\n========== ROOT CAUSE ANALYSIS ==========\n")
 
-        return self.root_cause_agent.run()
+        return await self.root_cause_agent.run()
 
-    def generate_recommendations(self):
+    async def generate_recommendations(self):
 
         print("\n========== GENERATING RECOMMENDATIONS ==========\n")
 
-        return self.recommendation_agent.run()
+        return await self.recommendation_agent.run()
 
-    def generate_report(self):
+    async def generate_report(self):
 
         print("\n========== GENERATING FINAL REPORT ==========\n")
 
-        return self.report_agent.run()
+        return await self.report_agent.run()

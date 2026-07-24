@@ -1,3 +1,7 @@
+import json
+
+from mcp.types import TextContent
+
 from app.agents.base_agent import BaseAgent
 from app.tools.alert_tool import AlertTool
 from app.memory.investigation_memory import InvestigationMemory
@@ -19,15 +23,39 @@ class AlertAgent(BaseAgent):
         else:
             self.memory = memory
 
-    def fetch_alerts(self):
+    async def fetch_alerts(self):
 
-        return self.alert_tool.execute()
+        return await self.alert_tool.execute()
 
-    def execute(self):
+    async def execute(self):
 
-        result = self.fetch_alerts()
+        result = await self.fetch_alerts()
 
-        alerts = result.get("alerts", [])
+        payload = {}
+
+        for item in result.content:
+
+            if isinstance(item, TextContent):
+
+                try:
+                    payload = json.loads(item.text)
+                    break
+
+                except Exception:
+                    pass
+
+        # Temporary debugging
+        print("\n========== ALERT PAYLOAD ==========")
+        print(payload)
+        print("===================================\n")
+
+        # Stop here until we know the JSON structure
+        return {
+            "status": "STOP",
+            "payload": payload
+        }
+
+    def analyze(self, alerts):
 
         findings = []
 
@@ -40,16 +68,13 @@ class AlertAgent(BaseAgent):
                 "service": alert.get("service")
             })
 
-        # Store evidence
         for finding in findings:
             self.memory.add_evidence(finding)
 
-        # Timeline
         self.memory.add_timeline_event(
             "Alert investigation completed."
         )
 
-        # Temporary confidence
         if findings:
             self.memory.set_confidence(85)
 

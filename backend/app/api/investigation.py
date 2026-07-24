@@ -14,9 +14,9 @@ service = InvestigationService()
 
 
 @router.post("/start")
-def start():
+async def start():
 
-    result = coordinator.start_investigation()
+    result = await coordinator.start_investigation()
 
     return result
 
