@@ -82,9 +82,9 @@ class ReportAgent(BaseAgent):
 
             "graph": {
 
-                "nodes": len(graph.get("nodes", [])),
+                "nodes": graph.get("nodes", []),
 
-                "edges": len(graph.get("edges", []))
+                "edges": graph.get("edges", [])
             },
 
             "reasoning": reasoning,
