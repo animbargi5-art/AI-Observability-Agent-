@@ -39,11 +39,6 @@ class TraceAgent(BaseAgent):
 
         traces = await self.fetch_traces()
 
-        print("\n========== TRACE RAW RESPONSE ==========")
-        print(type(traces))
-        print(traces)
-        print("========================================\n")
-
         payload = {}
 
         if hasattr(traces, "content"):
@@ -53,19 +48,11 @@ class TraceAgent(BaseAgent):
                 if isinstance(item, TextContent):
 
                     try:
-
                         payload = json.loads(item.text)
-
                         break
 
-                    except Exception as ex:
-
-                        print("JSON Parse Error:", ex)
-
-        print("\n========== TRACE PAYLOAD ==========")
-        print(type(payload))
-        print(payload)
-        print("===================================\n")
+                    except Exception as e:
+                        print(f"JSON Parse Error: {e}")
 
         rows = (
             payload.get("data", {})
@@ -74,21 +61,60 @@ class TraceAgent(BaseAgent):
                    .get("rows", [])
         )
 
+        print(f"Trace rows received: {len(rows)}")
+
         incidents = []
 
         for row in rows:
 
             data = row.get("data", {})
 
+            print("\n----------------------------")
+            print("Service :", data.get("service.name"))
+            print("Endpoint:", data.get("name"))
+            print("Method  :", data.get("http_method"))
+            print("Status  :", data.get("response_status_code"))
+            print("----------------------------")
+
+            endpoint = data.get("name", "")
+            service = data.get("service.name", "")
+
+            # --------------------------------------------------
+            # Ignore internal telemetry
+            # --------------------------------------------------
+
+            if not endpoint:
+                continue
+
+            if endpoint.startswith("POST /investigation"):
+                continue
+
+            if endpoint.endswith("http send"):
+                continue
+
+            if "mcp" in endpoint.lower():
+                continue
+
+            if service == "tattva-ai-backend" and endpoint.endswith("http send"):
+                continue
+
             incidents.append({
 
-                "service": data.get("service.name"),
+                "service": service,
 
-                "endpoint": data.get("name"),
+                "endpoint": endpoint,
 
-                "method": data.get("http_method"),
+                "method": (
+                    data.get("http_method")
+                    or data.get("http.request.method")
+                    or ""
+                ),
 
-                "status": data.get("response_status_code"),
+                "status": (
+                    data.get("response_status_code")
+                    or data.get("http.response.status_code")
+                    or ""
+                ),
 
                 "duration_ms": round(
                     data.get("duration_nano", 0) / 1_000_000,
@@ -97,11 +123,18 @@ class TraceAgent(BaseAgent):
 
                 "trace_id": data.get("trace_id"),
 
-                "timestamp": data.get("timestamp")
+                "timestamp": (
+                    data.get("timestamp")
+                    or row.get("timestamp")
+                )
 
             })
 
+        print(f"Valid incidents: {len(incidents)}")
+
         findings = self.detect_incidents(incidents)
+
+        print(f"Findings generated: {len(findings)}")
 
         for finding in findings:
             self.memory.add_evidence(finding)
@@ -112,12 +145,14 @@ class TraceAgent(BaseAgent):
 
         if findings:
 
-            highest_confidence = max(
-                finding["confidence"]
-                for finding in findings
-            )
+            self.memory.set_confidence(
 
-            self.memory.set_confidence(highest_confidence)
+                max(
+                    finding["confidence"]
+                    for finding in findings
+                )
+
+            )
 
         return {
 
@@ -135,9 +170,11 @@ class TraceAgent(BaseAgent):
 
         for incident in incidents:
 
-            duration = incident["duration_ms"]
+            duration = incident.get("duration_ms", 0)
 
-            status = str(incident["status"])
+            status = str(
+                incident.get("status", "")
+            )
 
             if duration > SLOW_API_THRESHOLD:
 
@@ -230,7 +267,7 @@ class TraceAgent(BaseAgent):
 
                 })
 
-            if status.startswith("4"):
+            elif status.startswith("4"):
 
                 findings.append({
 

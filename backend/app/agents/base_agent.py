@@ -60,6 +60,8 @@ class BaseAgent(ABC):
 
             result = await self.execute()
 
+            print(f"{self.name} completed successfully.")
+
             await self.after_run()
 
             return result

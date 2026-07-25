@@ -12,7 +12,9 @@ class MetricsTool:
 
         result = await self.signoz.list_metrics()
 
-        if hasattr(result, "content"):
-            return json.loads(result.content[0].text)
+        print("\n========== METRICS TOOL ==========")
+        print(type(result))
+        print(result)
+        print("==================================\n")
 
         return result

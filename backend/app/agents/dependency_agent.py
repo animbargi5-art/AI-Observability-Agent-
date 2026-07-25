@@ -4,23 +4,27 @@ from app.memory.investigation_memory import InvestigationMemory
 
 
 class DependencyAgent(BaseAgent):
+    """
+    Collects service dependency information and stores it
+    inside the shared investigation memory.
+    """
 
     def __init__(self, memory=None):
 
         super().__init__(
-            "Dependency Agent",
-            "Analyzes service dependencies from SigNoz."
+            name="Dependency Agent",
+            description="Analyzes service dependencies from SigNoz."
         )
 
         self.dependency_tool = DependencyTool()
 
         if memory is None:
             self.memory = InvestigationMemory()
-
         else:
             self.memory = memory
 
     async def fetch_dependencies(self):
+
         return await self.dependency_tool.execute()
 
     async def execute(self):
@@ -29,31 +33,81 @@ class DependencyAgent(BaseAgent):
 
         dependencies = result.get("dependencies", [])
 
+        print("\n========== DEPENDENCY AGENT ==========")
+        print(f"Dependencies Found: {len(dependencies)}")
+        print("======================================\n")
+
         findings = []
 
         for dependency in dependencies:
 
-            findings.append({
-                "source": dependency.get("source"),
-                "target": dependency.get("target"),
-                "latency_ms": dependency.get("latency_ms", 0),
-                "error_rate": dependency.get("error_rate", 0)
-            })
+            finding = {
 
-        # Store findings in Shared Investigation Memory
+                "severity": "LOW",
+
+                "confidence": 70,
+
+                "category": "Infrastructure",
+
+                "type": "Service Dependency",
+
+                "root_service": dependency.get("source"),
+
+                "source": dependency.get("source"),
+
+                "target": dependency.get("target"),
+
+                "latency_ms": dependency.get(
+                    "latency_ms",
+                    0
+                ),
+
+                "error_rate": dependency.get(
+                    "error_rate",
+                    0
+                )
+
+            }
+
+            findings.append(finding)
+
+        # ---------------------------------------------
+        # Save evidence
+        # ---------------------------------------------
+
         for finding in findings:
+
             self.memory.add_evidence(finding)
 
-        # Record investigation progress
+        # ---------------------------------------------
+        # Timeline
+        # ---------------------------------------------
+
         self.memory.add_timeline_event(
-            "Dependency investigation completed."
+            "Dependency analysis completed."
         )
 
-        # Temporary confidence score
+        # ---------------------------------------------
+        # Confidence
+        # ---------------------------------------------
+
         if findings:
-            self.memory.set_confidence(80)
+
+            highest = max(
+                finding["confidence"]
+                for finding in findings
+            )
+
+            self.memory.set_confidence(highest)
+
+        print(
+            f"Dependency Findings Stored: {len(findings)}"
+        )
 
         return {
+
             "total_dependencies": len(findings),
+
             "findings": findings
+
         }
