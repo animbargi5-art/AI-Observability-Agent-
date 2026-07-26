@@ -1,41 +1,88 @@
-import api from "../api/axios";
+import api from "../api/interceptors.js";
 
-export const startInvestigation = async () => {
+class InvestigationService {
+    constructor() {
+        this.baseEndpoint = "/investigation";
+    }
 
-    const response = await api.post(
-        "/investigation/start"
-    );
+    // Start new investigation
+    async startInvestigation(params = {}) {
+        const response = await api.post(`${this.baseEndpoint}/start`, params);
+        return response.data;
+    }
 
-    return response.data;
+    // Get investigation details by ID
+    async getInvestigationById(id) {
+        const response = await api.get(`${this.baseEndpoint}/${id}`);
+        return response.data;
+    }
 
-};
+    // Get investigation progress
+    async getInvestigationProgress(id) {
+        const response = await api.get(`${this.baseEndpoint}/${id}/progress`);
+        return response.data;
+    }
 
-export const getAllInvestigations = async () => {
+    // Get investigation history with optional filters
+    async getInvestigationHistory(filters = {}) {
+        const params = new URLSearchParams();
+        
+        // Add filters to query params
+        Object.entries(filters).forEach(([key, value]) => {
+            if (value !== null && value !== undefined && value !== '') {
+                if (Array.isArray(value)) {
+                    value.forEach(v => params.append(key, v));
+                } else {
+                    params.append(key, value);
+                }
+            }
+        });
 
-    const response = await api.get(
-        "/investigation/history"
-    );
+        const queryString = params.toString();
+        const url = queryString ? `${this.baseEndpoint}/history?${queryString}` : `${this.baseEndpoint}/history`;
+        
+        const response = await api.get(url);
+        return response.data;
+    }
 
-    return response.data;
+    // Delete investigation
+    async deleteInvestigation(id) {
+        const response = await api.delete(`${this.baseEndpoint}/${id}`);
+        return response.data;
+    }
 
-};
+    // Refresh investigation (re-run analysis)
+    async refreshInvestigation(id) {
+        const response = await api.post(`${this.baseEndpoint}/${id}/refresh`);
+        return response.data;
+    }
 
-export const getInvestigationById = async (id) => {
+    // Get investigation evidence
+    async getInvestigationEvidence(id) {
+        const response = await api.get(`${this.baseEndpoint}/${id}/evidence`);
+        return response.data;
+    }
 
-    const response = await api.get(
-        `/investigation/${id}`
-    );
+    // Get investigation timeline
+    async getInvestigationTimeline(id) {
+        const response = await api.get(`${this.baseEndpoint}/${id}/timeline`);
+        return response.data;
+    }
 
-    return response.data;
+    // Get investigation correlation graph
+    async getInvestigationGraph(id) {
+        const response = await api.get(`${this.baseEndpoint}/${id}/graph`);
+        return response.data;
+    }
 
-};
+    // Export investigation report
+    async exportInvestigation(id, format = 'pdf') {
+        const response = await api.get(`${this.baseEndpoint}/${id}/export`, {
+            params: { format },
+            responseType: 'blob'
+        });
+        return response.data;
+    }
+}
 
-export const deleteInvestigation = async (id) => {
-
-    const response = await api.delete(
-        `/investigation/${id}`
-    );
-
-    return response.data;
-
-};
+export default new InvestigationService();

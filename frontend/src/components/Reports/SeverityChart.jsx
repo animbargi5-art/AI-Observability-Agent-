@@ -1,57 +1,99 @@
-import {
-    PieChart,
-    Pie,
-    Cell,
-    Tooltip,
-    ResponsiveContainer
-} from "recharts";
+import React from 'react';
+import { Chart } from 'primereact/chart';
+import { Card } from 'primereact/card';
 
-const COLORS = [
-    "#ef4444", // HIGH
-    "#f59e0b", // MEDIUM
-    "#3b82f6", // LOW
-    "#10b981"  // NONE
-];
+const SeverityChart = ({ data = [] }) => {
+    // Transform data for Chart.js
+    const chartData = {
+        labels: data.map(item => item.name || item.label),
+        datasets: [
+            {
+                data: data.map(item => item.value),
+                backgroundColor: [
+                    '#EF4444', // CRITICAL - Red
+                    '#F59E0B', // HIGH - Orange  
+                    '#3B82F6', // MEDIUM - Blue
+                    '#10B981', // LOW - Green
+                    '#6B7280'  // NONE - Gray
+                ],
+                borderColor: [
+                    '#DC2626',
+                    '#D97706',
+                    '#2563EB',
+                    '#059669',
+                    '#4B5563'
+                ],
+                borderWidth: 2,
+                hoverBorderWidth: 3
+            }
+        ]
+    };
 
-export default function SeverityChart({ data }) {
+    const options = {
+        plugins: {
+            title: {
+                display: true,
+                text: 'Severity Distribution',
+                font: {
+                    size: 16,
+                    weight: 'bold'
+                },
+                color: '#1F2937'
+            },
+            legend: {
+                position: 'bottom',
+                labels: {
+                    padding: 20,
+                    usePointStyle: true,
+                    font: {
+                        size: 12
+                    }
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const label = context.label || '';
+                        const value = context.parsed || 0;
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                        return `${label}: ${value} (${percentage}%)`;
+                    }
+                }
+            }
+        },
+        responsive: true,
+        maintainAspectRatio: false,
+        elements: {
+            arc: {
+                borderRadius: 4
+            }
+        }
+    };
 
-    return (
-
-        <div className="report-card">
-
-            <h2>Severity Distribution</h2>
-
-            <ResponsiveContainer width="100%" height={320}>
-
-                <PieChart>
-
-                    <Pie
-                        data={data}
-                        dataKey="value"
-                        nameKey="name"
-                        outerRadius={110}
-                        label
-                    >
-
-                        {data.map((entry, index) => (
-
-                            <Cell
-                                key={index}
-                                fill={COLORS[index % COLORS.length]}
-                            />
-
-                        ))}
-
-                    </Pie>
-
-                    <Tooltip />
-
-                </PieChart>
-
-            </ResponsiveContainer>
-
+    const cardHeader = (
+        <div className="flex align-items-center gap-2">
+            <i className="pi pi-chart-pie text-blue-500"></i>
+            <span className="font-semibold">Severity Distribution</span>
         </div>
-
     );
 
-}
+    return (
+        <Card header={cardHeader} className="severity-chart-card">
+            <div style={{ height: '300px' }}>
+                {data && data.length > 0 ? (
+                    <Chart type="pie" data={chartData} options={options} />
+                ) : (
+                    <div className="flex align-items-center justify-content-center h-full">
+                        <div className="text-center text-500">
+                            <i className="pi pi-chart-pie text-4xl mb-3"></i>
+                            <p>No severity data available</p>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </Card>
+    );
+};
+
+export default SeverityChart;

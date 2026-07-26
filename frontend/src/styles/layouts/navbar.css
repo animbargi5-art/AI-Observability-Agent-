@@ -1,0 +1,298 @@
+/* Navbar Layout */
+.navbar {
+    background: var(--surface-0);
+    border-bottom: 1px solid var(--surface-border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    position: sticky;
+    top: 0;
+    z-index: 999;
+}
+
+.main-menubar {
+    background: transparent;
+    border: none;
+    padding: 0.75rem 1.5rem;
+}
+
+/* Brand Section */
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.brand-icon {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+}
+
+.brand-text {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-color);
+    margin: 0;
+}
+
+/* Breadcrumb Section */
+.breadcrumb-section {
+    padding: 0.5rem 1.5rem;
+    border-top: 1px solid var(--surface-100);
+    background: var(--surface-50);
+}
+
+.navbar-breadcrumb {
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+
+.navbar-breadcrumb .p-breadcrumb-list {
+    margin: 0;
+    padding: 0;
+}
+
+.navbar-breadcrumb .p-menuitem-link {
+    padding: 0.25rem 0.5rem;
+    color: var(--text-color-secondary);
+    text-decoration: none;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.navbar-breadcrumb .p-menuitem-link:hover {
+    background: var(--surface-100);
+    color: var(--text-color);
+}
+
+/* Actions Section */
+.navbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Current Investigation Indicator */
+.current-investigation {
+    margin-right: 1rem;
+}
+
+.investigation-chip {
+    background: var(--primary-100);
+    color: var(--primary-700);
+    border: 1px solid var(--primary-200);
+}
+
+.investigation-chip .p-chip-icon {
+    color: var(--primary-600);
+}
+
+/* Action Buttons */
+.status-button,
+.notification-button,
+.theme-button,
+.user-button {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    color: var(--text-color-secondary);
+    transition: all 0.2s ease;
+}
+
+.status-button:hover,
+.notification-button:hover,
+.theme-button:hover,
+.user-button:hover {
+    background: var(--surface-100);
+    color: var(--text-color);
+}
+
+/* Notification Badge */
+.notification-wrapper {
+    position: relative;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -0.25rem;
+    right: -0.25rem;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 50%;
+    font-size: 0.75rem;
+}
+
+/* User Avatar */
+.user-avatar {
+    width: 2rem;
+    height: 2rem;
+    background: var(--primary-color);
+    color: var(--primary-color-text);
+}
+
+/* Overlay Panels */
+.status-panel,
+.notifications-panel {
+    width: 20rem;
+    max-width: 90vw;
+}
+
+.status-content,
+.notifications-content {
+    padding: 0.5rem;
+}
+
+.status-content h5,
+.notifications-content h5 {
+    margin: 0 0 1rem 0;
+    color: var(--text-color);
+    font-weight: 600;
+}
+
+/* Status Items */
+.status-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: var(--surface-50);
+    border-radius: 6px;
+    border-left: 3px solid transparent;
+}
+
+.status-item i.text-green-500 {
+    color: var(--green-500);
+}
+
+.status-item:has(i.text-green-500) {
+    border-left-color: var(--green-500);
+}
+
+.status-item i.text-red-500 {
+    color: var(--red-500);
+}
+
+.status-item:has(i.text-red-500) {
+    border-left-color: var(--red-500);
+}
+
+.status-item i.text-yellow-500 {
+    color: var(--yellow-500);
+}
+
+.status-item:has(i.text-yellow-500) {
+    border-left-color: var(--yellow-500);
+}
+
+/* Notifications */
+.notifications-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.notifications-list {
+    max-height: 20rem;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+}
+
+.notification-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    background: var(--surface-50);
+    transition: background 0.2s ease;
+}
+
+.notification-item:hover {
+    background: var(--surface-100);
+}
+
+.notification-item:last-child {
+    margin-bottom: 0;
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-content p {
+    margin: 0 0 0.25rem 0;
+    color: var(--text-color);
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.notification-content small {
+    color: var(--text-color-secondary);
+    font-size: 0.75rem;
+}
+
+/* User Menu */
+.user-menu {
+    width: 12rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .navbar-brand .brand-text {
+        display: none;
+    }
+    
+    .navbar-actions {
+        gap: 0.25rem;
+    }
+    
+    .current-investigation {
+        display: none;
+    }
+    
+    .breadcrumb-section {
+        display: none;
+    }
+    
+    .status-panel,
+    .notifications-panel {
+        width: calc(100vw - 2rem);
+    }
+}
+
+/* Animation for spinning status */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.pi-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Custom scrollbar for notifications */
+.notifications-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.notifications-list::-webkit-scrollbar-track {
+    background: var(--surface-100);
+    border-radius: 3px;
+}
+
+.notifications-list::-webkit-scrollbar-thumb {
+    background: var(--surface-300);
+    border-radius: 3px;
+}
+
+.notifications-list::-webkit-scrollbar-thumb:hover {
+    background: var(--surface-400);
+}

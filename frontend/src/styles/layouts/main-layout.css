@@ -1,0 +1,90 @@
+/* Main Layout Styles */
+.layout-wrapper {
+    display: flex;
+    min-height: 100vh;
+    background-color: var(--surface-ground);
+}
+
+.layout-main {
+    flex: 1;
+    margin-left: 260px;
+    min-height: 100vh;
+    background-color: var(--surface-50);
+    transition: margin-left 0.3s ease;
+}
+
+.main-content {
+    padding: 2rem;
+    min-height: calc(100vh - 60px); /* Account for navbar height */
+}
+
+/* Responsive layout */
+@media (max-width: 968px) {
+    .layout-main {
+        margin-left: 0;
+    }
+    
+    .main-content {
+        padding: 1rem;
+    }
+}
+
+/* Custom toast styling */
+.custom-toast {
+    z-index: 1300;
+}
+
+.custom-toast .p-toast-message {
+    margin: 0 0 1rem 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.custom-toast .p-toast-message-content {
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+/* Loading overlay for global loading states */
+.layout-loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+/* Sidebar overlay for mobile */
+.layout-sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 999;
+    display: none;
+}
+
+.layout-sidebar-overlay.active {
+    display: block;
+}
+
+/* Content area adjustments for different states */
+.layout-main.sidebar-collapsed {
+    margin-left: 60px;
+}
+
+.layout-main.sidebar-hidden {
+    margin-left: 0;
+}
+
+/* Smooth transitions */
+.layout-main,
+.layout-sidebar-overlay {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}

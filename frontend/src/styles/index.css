@@ -1,0 +1,262 @@
+/* TattvaAI Main Stylesheet */
+
+/* Base styles - foundational CSS */
+@import './base/reset.css';
+@import './base/variables.css';
+@import './base/utilities.css';
+
+/* PrimeReact theme and core styles */
+@import 'primereact/resources/themes/lara-light-blue/theme.css';
+@import 'primereact/resources/primereact.min.css';
+@import 'primeicons/primeicons.css';
+@import 'primeflex/primeflex.css';
+
+/* Layout styles - overall application structure */
+@import './layouts/main-layout.css';
+@import './layouts/navbar.css';
+@import './layouts/sidebar.css';
+
+/* Page styles - page-specific layouts */
+@import './pages/common.css';
+@import './pages/dashboard.css';
+@import './pages/investigation.css';
+@import './pages/reports.css';
+@import './pages/settings.css';
+
+/* Component styles - reusable component styling */
+/* Dashboard components */
+@import './components/dashboard/header.css';
+@import './components/dashboard/investigation-card.css';
+@import './components/dashboard/progress-panel.css';
+@import './components/dashboard/recent-incidents.css';
+@import './components/dashboard/statistics.css';
+@import './components/dashboard/status-card.css';
+
+/* Investigation components */
+@import './components/investigation/action-panel.css';
+@import './components/investigation/correlation-panel.css';
+@import './components/investigation/evidence-panel.css';
+@import './components/investigation/incident-summary.css';
+@import './components/investigation/investigation-actions.css';
+@import './components/investigation/investigation-graph.css';
+@import './components/investigation/investigation-header.css';
+@import './components/investigation/reasoning-panel.css';
+@import './components/investigation/recommendation-panel.css';
+@import './components/investigation/root-cause-panel.css';
+@import './components/investigation/summary-panel.css';
+@import './components/investigation/timeline-panel.css';
+
+/* Report components */
+@import './components/reports/report-stat-card.css';
+@import './components/reports/severity-chart.css';
+@import './components/reports/status-chart.css';
+@import './components/reports/trend-chart.css';
+
+/* History components */
+@import './components/history/search-bar.css';
+@import './components/history/severity-filter.css';
+@import './components/history/sort-filter.css';
+@import './components/history/status-filter.css';
+
+/* Error handling and loading states */
+@import './components/loading-states.css';
+@import './components/error-handling.css';
+
+/* Global application styles */
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Layout container */
+.layout-container {
+  display: flex;
+  min-height: calc(100vh - var(--header-height));
+  background-color: var(--surface-ground);
+}
+
+.layout-sidebar {
+  flex: 0 0 var(--sidebar-width);
+  transition: all var(--transition-base);
+}
+
+.layout-sidebar.collapsed {
+  flex: 0 0 var(--sidebar-collapsed-width);
+}
+
+.layout-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.layout-main {
+  flex: 1;
+  padding: var(--spacing-md);
+  overflow-y: auto;
+  background-color: var(--surface-ground);
+}
+
+/* Responsive layout adjustments */
+@media (max-width: 767px) {
+  .layout-container {
+    flex-direction: column;
+  }
+  
+  .layout-sidebar {
+    flex: none;
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    bottom: 0;
+    z-index: var(--z-index-fixed);
+    transform: translateX(-100%);
+    transition: transform var(--transition-base);
+  }
+  
+  .layout-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+  
+  .layout-main {
+    padding: var(--spacing-sm);
+  }
+}
+
+/* Custom PrimeReact overrides */
+.p-card {
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--surface-border);
+}
+
+.p-card .p-card-header {
+  padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-sm) var(--spacing-lg);
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.p-card .p-card-body {
+  padding: var(--spacing-lg);
+}
+
+.p-card .p-card-content {
+  padding: 0;
+}
+
+/* Custom button styles */
+.p-button {
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+.p-button:focus {
+  box-shadow: 0 0 0 2px var(--primary-color-text), 0 0 0 4px var(--primary-color), 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+/* Custom input styles */
+.p-inputtext:focus,
+.p-dropdown:not(.p-disabled):focus,
+.p-multiselect:not(.p-disabled):focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+/* Custom table styles */
+.p-datatable .p-datatable-header {
+  background-color: var(--surface-50);
+  border-bottom: 2px solid var(--surface-border);
+  padding: var(--spacing-lg);
+}
+
+.p-datatable .p-datatable-thead > tr > th {
+  background-color: var(--surface-100);
+  font-weight: 600;
+  color: var(--text-color);
+  border-color: var(--surface-border);
+}
+
+.p-datatable .p-datatable-tbody > tr:nth-child(even) {
+  background-color: var(--surface-50);
+}
+
+.p-datatable .p-datatable-tbody > tr:hover {
+  background-color: var(--surface-100);
+}
+
+/* Loading and skeleton styles */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-3xl);
+}
+
+.loading-text {
+  margin-left: var(--spacing-md);
+  color: var(--text-color-secondary);
+}
+
+/* Error state styles */
+.error-container {
+  text-align: center;
+  padding: var(--spacing-3xl);
+}
+
+.error-icon {
+  color: var(--danger-color);
+  font-size: var(--font-size-4xl);
+  margin-bottom: var(--spacing-lg);
+}
+
+.error-title {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-color);
+}
+
+.error-message {
+  color: var(--text-color-secondary);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Accessibility improvements */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Focus management */
+.focus\:ring-2:focus {
+  box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .p-card {
+    border-width: 2px;
+  }
+  
+  .p-button {
+    border-width: 2px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

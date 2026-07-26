@@ -1,0 +1,289 @@
+/* Loading States CSS */
+
+/* Loading Spinner */
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(2px);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.loading-overlay-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Card Skeleton */
+.card-skeleton {
+    min-height: 150px;
+}
+
+.card-skeleton .p-skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Table Skeleton */
+.table-skeleton {
+    background: white;
+    border: 1px solid var(--surface-border);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.table-skeleton .grid:nth-child(even) {
+    background-color: var(--surface-50);
+}
+
+/* Chart Skeleton */
+.chart-skeleton {
+    background: white;
+    padding: 1.5rem;
+    border: 1px solid var(--surface-border);
+    border-radius: 6px;
+}
+
+/* Page Skeleton */
+.page-skeleton {
+    padding: 1rem;
+}
+
+/* Loading States for Specific Components */
+.dashboard-loading {
+    min-height: 400px;
+}
+
+.investigation-loading {
+    min-height: 500px;
+}
+
+.reports-loading {
+    min-height: 300px;
+}
+
+/* Button Loading States */
+.p-button.p-button-loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.p-button.p-button-loading .p-button-label {
+    opacity: 0.6;
+}
+
+/* DataTable Loading */
+.p-datatable .p-datatable-loading-overlay {
+    background-color: rgba(255, 255, 255, 0.9);
+}
+
+.p-datatable .p-datatable-loading-icon {
+    font-size: 2rem;
+    color: var(--primary-color);
+}
+
+/* Card Loading State */
+.p-card.card-loading {
+    position: relative;
+    overflow: hidden;
+}
+
+.p-card.card-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.6),
+        transparent
+    );
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        left: -100%;
+    }
+    100% {
+        left: 100%;
+    }
+}
+
+/* Progress Bar Loading */
+.loading-progress {
+    width: 100%;
+    margin: 1rem 0;
+}
+
+.loading-progress .p-progressbar {
+    height: 4px;
+    background-color: var(--surface-200);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.loading-progress .p-progressbar .p-progressbar-value {
+    background: linear-gradient(
+        90deg,
+        var(--primary-color),
+        var(--primary-400),
+        var(--primary-color)
+    );
+    background-size: 200% 100%;
+    animation: loading-progress 2s infinite;
+}
+
+@keyframes loading-progress {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Skeleton Variations */
+.skeleton-text {
+    height: 1rem;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 4px;
+}
+
+.skeleton-text.skeleton-title {
+    height: 1.5rem;
+    width: 60%;
+}
+
+.skeleton-text.skeleton-subtitle {
+    height: 1rem;
+    width: 40%;
+}
+
+.skeleton-text.skeleton-line {
+    height: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+.skeleton-text.skeleton-line:last-child {
+    width: 70%;
+}
+
+.skeleton-avatar {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+.skeleton-button {
+    height: 2.5rem;
+    width: 100px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+/* Loading Dots */
+.loading-dots {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.loading-dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    animation: loading-dots 1.4s infinite both;
+}
+
+.loading-dots span:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.loading-dots span:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes loading-dots {
+    0%, 80%, 100% {
+        transform: scale(0);
+        opacity: 0.5;
+    }
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Responsive Loading States */
+@media (max-width: 768px) {
+    .loading-overlay-content {
+        padding: 1.5rem;
+        margin: 1rem;
+    }
+
+    .loading-spinner {
+        min-height: 150px;
+    }
+
+    .page-skeleton {
+        padding: 0.5rem;
+    }
+}
+
+/* Dark Theme Support */
+@media (prefers-color-scheme: dark) {
+    .loading-overlay {
+        background-color: rgba(0, 0, 0, 0.8);
+    }
+
+    .loading-overlay-content {
+        background: var(--surface-900);
+        color: var(--text-color);
+    }
+
+    .card-skeleton .p-skeleton,
+    .skeleton-text,
+    .skeleton-avatar,
+    .skeleton-button {
+        background: linear-gradient(90deg, #2a2a2a 25%, #404040 50%, #2a2a2a 75%);
+        background-size: 200% 100%;
+    }
+}
