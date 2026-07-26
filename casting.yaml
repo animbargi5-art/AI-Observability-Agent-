@@ -1,22 +1,8 @@
 apiVersion: v1alpha1
-
 kind: Installation
-
 metadata:
-  name: signoz
-
+  name: tattvaai-signoz
 spec:
-
   deployment:
-    mode: docker
     flavor: compose
-
-  mcp:
-
-    spec:
-
-      enabled: true
-
-      env:
-
-          MCP-SERVER_PORT: "8001"
+    mode: docker

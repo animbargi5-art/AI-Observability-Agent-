@@ -20,7 +20,7 @@ test_*.py
 start_tattvaai.py
 
 # Development Tools & Scripts
-casting.yaml*
+# casting.yaml* (commented out to keep casting.yaml)
 pours/
 
 # Temporary Development Files
