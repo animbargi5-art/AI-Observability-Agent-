@@ -56,7 +56,7 @@ class HistoricalAgent(BaseAgent):
 
         )
 
-        self.history_tool = HistoricalTool()
+        self.historical_tool = HistoricalTool()
 
     # -------------------------------------------------------------------------
     # Execute
@@ -75,7 +75,7 @@ class HistoricalAgent(BaseAgent):
 
         )
 
-        incidents = await self.history_tool.execute(
+        incidents = await self.historical_tool.execute(
 
             service_name=state.service_name,
 

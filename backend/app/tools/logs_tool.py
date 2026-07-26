@@ -45,7 +45,10 @@ class LogsTool(BaseTool):
 
     def __init__(self) -> None:
 
-        super().__init__()
+        super().__init__(
+            name="LogsTool",
+            description="Retrieves application logs."
+        )
 
         self.telemetry = TelemetryService()
 

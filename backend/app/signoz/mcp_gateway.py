@@ -38,6 +38,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.mcp.client import MCPClient
 from app.core.logger import logger
 from app.signoz.config import SigNozConfig
 
@@ -53,7 +54,7 @@ class MCPGateway:
 
         self.connected = False
 
-        self.client = None
+        self.client = MCPClient()
 
     # -------------------------------------------------------------------------
     # Connection
@@ -75,18 +76,7 @@ class MCPGateway:
             self.server_url,
         )
 
-        # ==========================================================
-        # TODO
-        #
-        # Create official MCP Client
-        #
-        # Example:
-        #
-        # self.client = MCPClient(...)
-        #
-        # await self.client.connect()
-        #
-        # ==========================================================
+        await self.client.connect()
 
         self.connected = True
 
@@ -102,12 +92,7 @@ class MCPGateway:
 
         logger.info("Disconnecting MCP Gateway...")
 
-        # ==========================================================
-        # TODO
-        #
-        # await self.client.close()
-        #
-        # ==========================================================
+        await self.client.disconnect()
 
         self.connected = False
 
@@ -153,22 +138,13 @@ class MCPGateway:
 
         try:
 
-            # ======================================================
-            # TODO
-            #
-            # result = await self.client.call_tool(
-            #     tool_name,
-            #     arguments,
-            # )
-            #
-            # return result
-            #
-            # ======================================================
-
-            raise NotImplementedError(
-                "Official MCP SDK integration not implemented yet."
+            result = await self.client.call_tool(
+                tool_name,
+                arguments,
             )
 
+            return result
+            
         except Exception as ex:
 
             logger.exception(

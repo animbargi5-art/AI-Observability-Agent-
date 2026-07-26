@@ -1,18 +1,17 @@
 """
 ===============================================================================
-TattvaAI - Historical Agent
+TattvaAI - Dependency Agent
 ===============================================================================
 
 Purpose
 -------
-Analyzes historical telemetry and previous incidents to identify recurring
-patterns and generate investigation evidence.
+Analyzes service dependencies and generates investigation evidence.
 
 Responsibilities
 ----------------
-• Retrieve historical traces
-• Compare current and historical incidents
-• Detect recurring failures
+• Retrieve service dependencies
+• Detect unhealthy downstream services
+• Detect high dependency latency
 • Generate Evidence objects
 • Update InvestigationState
 
@@ -20,9 +19,9 @@ Flow
 ----
 InvestigationState
         ↓
-HistoricalTool
+DependencyTool
         ↓
-List[Trace]
+List[Dependency]
         ↓
 Evidence
         ↓
@@ -34,24 +33,29 @@ InvestigationState
 from __future__ import annotations
 
 from app.agents.base_agent import BaseAgent
+from app.models.dependency import Dependency
 from app.models.evidence import Evidence
 from app.schemas.investigation_state import InvestigationState
-from app.tools.historical_tool import HistoricalTool
+from app.tools.dependency_tool import DependencyTool
 
 
-class HistoricalAgent(BaseAgent):
+class DependencyAgent(BaseAgent):
     """
-    AI agent responsible for historical incident analysis.
+    AI agent responsible for dependency analysis.
     """
 
     def __init__(self):
 
         super().__init__(
-            name="Historical Agent",
-            description="Analyzes historical telemetry."
+            name="Dependency Agent",
+            description="Analyzes service dependencies.",
         )
 
-        self.history_tool = HistoricalTool()
+        self.dependency_tool = DependencyTool()
+
+    # -------------------------------------------------------------------------
+    # Execute
+    # -------------------------------------------------------------------------
 
     async def execute(
         self,
@@ -59,20 +63,22 @@ class HistoricalAgent(BaseAgent):
     ) -> InvestigationState:
 
         self.log(
-            f"Searching historical incidents for {state.service_name}"
+            f"Analyzing dependencies for {state.service_name}"
         )
 
-        history = await self.history_tool.execute(
+        dependencies = await self.dependency_tool.execute(
             service_name=state.service_name,
         )
 
-        state.historical_incidents = history
+        state.dependencies = dependencies
 
         highest_confidence = state.confidence
 
-        for trace in history:
+        for dependency in dependencies:
 
-            evidence = self.analyze_history(trace)
+            evidence = self.analyze_dependency(
+                dependency
+            )
 
             if evidence is None:
                 continue
@@ -94,82 +100,73 @@ class HistoricalAgent(BaseAgent):
 
         self.add_timeline(
             state,
-            f"Historical Agent analyzed {len(history)} historical traces."
+            f"Dependency Agent analyzed {len(dependencies)} dependencies.",
         )
 
         return state
 
-    # -----------------------------------------------------------------
-    # Historical Analysis
-    # -----------------------------------------------------------------
+    # -------------------------------------------------------------------------
+    # Dependency Analysis
+    # -------------------------------------------------------------------------
 
-    def analyze_history(
+    def analyze_dependency(
         self,
-        trace,
+        dependency: Dependency,
     ) -> Evidence | None:
 
-        if not trace.slow and not trace.failed:
+        if (
+            dependency.error_rate <= 0
+            and dependency.average_latency_ms < 1000
+        ):
             return None
 
-        if trace.failed:
+        severity = "MEDIUM"
+        confidence = 80
+        summary = []
 
-            evidence_type = "Recurring Application Failure"
+        if dependency.error_rate > 0:
+
+            severity = "HIGH"
+            confidence = 95
+
+            summary.append(
+                f"Dependency error rate is {dependency.error_rate}%."
+            )
+
+        if dependency.average_latency_ms >= 1000:
 
             severity = "HIGH"
 
-            confidence = 92
+            confidence = max(confidence, 90)
 
-            summary = (
-                f"Historical trace shows repeated server failures "
-                f"for '{trace.operation_name}'."
-            )
-
-        else:
-
-            evidence_type = "Recurring Performance Issue"
-
-            severity = "MEDIUM"
-
-            confidence = 80
-
-            summary = (
-                f"Historical trace indicates repeated latency "
-                f"on '{trace.operation_name}'."
+            summary.append(
+                f"Dependency latency reached "
+                f"{dependency.average_latency_ms} ms."
             )
 
         return Evidence(
 
-            source="history",
+            source="dependency",
 
-            category="Historical",
+            category="Infrastructure",
 
-            type=evidence_type,
+            type="Dependency Failure",
 
             severity=severity,
 
             confidence=confidence,
 
-            service_name=trace.service_name,
+            service_name=dependency.source_service,
 
-            endpoint=trace.endpoint,
+            title=f"{dependency.target_service} Dependency",
 
-            operation=trace.operation_name,
-
-            title=evidence_type,
-
-            summary=summary,
+            summary=" ".join(summary),
 
             recommendation=(
-                "Compare current deployment with previous incidents "
-                "and review recurring failure patterns."
+                "Inspect downstream service health, "
+                "network latency and retry policies."
             ),
 
-            trace_id=trace.trace_id,
-
-            span_id=trace.span_id,
-
-            timestamp=trace.timestamp,
-
-            raw=trace.model_dump(),
+            raw=dependency.model_dump(),
 
         )

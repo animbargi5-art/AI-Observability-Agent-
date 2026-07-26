@@ -39,7 +39,7 @@ from typing import Optional
 from app.schemas.investigation_state import InvestigationState
 
 
-class InvestigationMemory:
+class MemoryManager:
     """
     Stores the current investigation state.
 

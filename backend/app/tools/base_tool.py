@@ -25,17 +25,16 @@ from typing import Any
 
 from app.core.logger import logger
 
-from app.signoz.telemetry_service import TelemetryService
-from app.signoz.alert_service import AlertService
-from app.signoz.documentation_service import DocumentationService
-
-
 class BaseTool:
     """
     Base class for every Tool.
     """
 
-    def __init__(self) -> None:
+    def __init__(self,name: str, description: str,) -> None:
+
+        self.name = name
+
+        self.description = description
 
         self.logger = logger
 
@@ -73,7 +72,7 @@ class BaseTool:
     # Health
     # ---------------------------------------------------------------------
 
-    async def health(self) -> dict:
+    async def health_check(self) -> dict:
 
         return {
 

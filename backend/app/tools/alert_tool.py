@@ -45,10 +45,13 @@ class AlertTool(BaseTool):
 
     def __init__(self) -> None:
 
-        super().__init__()
+        super().__init__(
+            name="Alert Tool",
+            description="Retrieves active alerts.",
+        ) 
 
         self.telemetry = TelemetryService()
-
+        
     # -------------------------------------------------------------------------
     # Retrieve Alerts
     # -------------------------------------------------------------------------

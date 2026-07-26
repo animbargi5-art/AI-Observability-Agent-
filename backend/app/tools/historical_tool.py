@@ -1,17 +1,17 @@
 """
 ===============================================================================
-TattvaAI - Alert Tool
+TattvaAI - Historical Tool
 ===============================================================================
 
 Purpose
 -------
-Provides normalized alert data for AI investigation agents.
+Provides normalized historical incident data for AI investigation agents.
 
 Responsibilities
 ----------------
-• Retrieve normalized alerts
+• Retrieve historical incidents
 • Hide TelemetryService implementation
-• Return Alert domain models
+• Return HistoricalIncident domain models
 
 This tool NEVER:
 ----------------
@@ -22,9 +22,9 @@ This tool NEVER:
 
 Architecture
 ------------
-AlertAgent
+HistoricalAgent
         ↓
-AlertTool
+HistoricalTool
         ↓
 Application Telemetry Service
         ↓
@@ -39,22 +39,22 @@ SigNoz
 
 from __future__ import annotations
 
-from app.core.logging import logger
-from app.models.alert import Alert
+from app.core.logger import logger
+from app.models.historical_incident import HistoricalIncident
 from app.services.telemetry_service import TelemetryService
 from app.tools.base_tool import BaseTool
 
 
-class AlertTool(BaseTool):
+class HistoricalTool(BaseTool):
     """
-    Tool responsible for retrieving normalized alerts.
+    Tool responsible for retrieving normalized historical incidents.
     """
 
     def __init__(self) -> None:
 
         super().__init__(
-            name="Alert Tool",
-            description="Retrieves active alerts from SigNoz.",
+            name="Historical Tool",
+            description="Retrieves historical incidents from telemetry.",
         )
 
         self.telemetry = TelemetryService()
@@ -65,23 +65,27 @@ class AlertTool(BaseTool):
 
     async def execute(
         self,
-    ) -> list[Alert]:
+        service_name: str,
+    ) -> list[HistoricalIncident]:
         """
-        Retrieve active alerts.
+        Retrieve historical incidents for a service.
         """
 
         logger.info(
-            "AlertTool: Retrieving active alerts."
+            "HistoricalTool: Retrieving historical incidents for '%s'.",
+            service_name,
         )
 
-        alerts = await self.telemetry.get_alerts()
+        incidents = await self.telemetry.get_historical_incidents(
+            service_name,
+        )
 
         logger.info(
-            "AlertTool: Retrieved %d alerts.",
-            len(alerts),
+            "HistoricalTool: Retrieved %d historical incident(s).",
+            len(incidents),
         )
 
-        return alerts
+        return incidents
 
     async def health_check(self) -> bool:
         """

@@ -38,9 +38,13 @@ class TraceTool(BaseTool):
 
     def __init__(self) -> None:
 
-        super().__init__()
+        super().__init__(
+            name="Trace Tool",
+            description="Retrieves distributed traces.",
+        )
 
         self.telemetry = TelemetryService()
+
 
     # -------------------------------------------------------------------------
     # Execute
@@ -60,7 +64,7 @@ class TraceTool(BaseTool):
             service_name,
         )
 
-        traces = await self.telemetry.search_traces(
+        traces = await self.telemetry.get_traces(
             service_name=service_name,
             **kwargs,
         )

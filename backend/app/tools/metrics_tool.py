@@ -55,7 +55,11 @@ class MetricsTool(BaseTool):
 
     def __init__(self):
 
-        super().__init__()
+        super().__init__(
+            name="Metrics Tool",
+            description="Retrieves application metrics.",
+        )
+        
         self.telemetry = TelemetryService()
 
     # -------------------------------------------------------------------------

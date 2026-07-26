@@ -61,7 +61,7 @@ LOGGING_CONFIG = {
                 "%(message)s"
             )
 
-        }
+        },
 
     },
 
@@ -73,33 +73,18 @@ LOGGING_CONFIG = {
 
             "formatter": "default",
 
-            "level": "INFO"
+            "level": "INFO",
 
         },
-
-        "file": {
-
-            "class": "logging.FileHandler",
-
-            "filename": LOG_DIR / "tattva_ai.log",
-
-            "formatter": "detailed",
-
-            "level": "DEBUG",
-
-            "encoding": "utf-8"
-
-        }
 
     },
 
     "root": {
 
-        "handlers": ["console", "file"],
+        "handlers": ["console"],
+        "level": "INFO",
 
-        "level": "INFO"
-
-    }
+    },
 
 }
 

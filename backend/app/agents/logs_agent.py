@@ -116,7 +116,7 @@ class LogsAgent(BaseAgent):
         log: Log,
     ) -> Evidence | None:
 
-        level = (log.level or "").upper()
+        level = (log.severity or "").upper()
 
         if level == "ERROR":
 

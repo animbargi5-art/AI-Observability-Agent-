@@ -32,6 +32,8 @@ SigNoz
 from __future__ import annotations
 
 import json
+from pathlib import Path
+
 from datetime import datetime
 from typing import Any
 
@@ -65,21 +67,42 @@ class TelemetryService:
     # Helpers
     # =====================================================================
 
-    def _extract_payload(self, result: Any) -> dict:
+    def _extract_payload(self, raw) -> dict:
 
-        if result is None:
-            return {}
+        logger.info("=" * 80)
+        logger.info("RAW MCP RESPONSE")
+        logger.info("=" * 80)
 
-        if isinstance(result, dict):
-            return result
+        logger.info("TYPE: %s", type(raw))
+        logger.info("RAW OBJECT:\n%s", raw)
 
-        if hasattr(result, "content"):
+        if hasattr(raw, "content"):
 
-            for item in result.content:
+            logger.info(
+                "CONTENT COUNT: %d",
+                len(raw.content),
+            )
+
+            for i, item in enumerate(raw.content):
+
+                logger.info("-" * 60)
+                logger.info("Item %d", i)
+                logger.info("TYPE: %s", type(item))
+
+                if hasattr(item, "text"):
+
+                    logger.info("TEXT:")
+                    logger.info(repr(item.text))
 
                 if isinstance(item, TextContent):
 
                     try:
+
+                        Path("payload.json").write_text(
+                            item.text,
+                            encoding="utf-8",
+                        )
+
                         return json.loads(item.text)
 
                     except Exception:
@@ -87,6 +110,10 @@ class TelemetryService:
                         logger.exception(
                             "Unable to parse MCP response."
                         )
+
+        logger.info("=" * 80)
+        logger.info("No JSON payload found.")
+        logger.info("=" * 80)
 
         return {}
 
@@ -209,12 +236,22 @@ class TelemetryService:
 
         payload = self._extract_payload(raw)
 
-        rows = (
+
+        logger.info(
+            json.dumps(
+                payload,
+                indent=2,
+                default=str,
+            )
+        )
+
+        results = (
             payload.get("data", {})
             .get("data", {})
-            .get("results", [{}])[0]
-            .get("rows", [])
+            .get("results")
         )
+
+        rows = results[0].get("rows", []) if results else []
 
         logs: list[Log] = []
 
@@ -461,3 +498,19 @@ class TelemetryService:
         )
 
         return alerts
+
+    # -------------------------------------------------------------------------
+    # Historical Incidents
+    # -------------------------------------------------------------------------
+
+    async def get_historical_incidents(
+        self,
+        service_name: str,
+    ):
+        """
+        Retrieve historical incidents for the specified service.
+        """
+
+        return await self.signoz.get_historical_incidents(
+            service_name=service_name,
+        )
