@@ -10,15 +10,14 @@ build/
 # TattvaAI Specific - Development & Internal Files
 # =============================================================================
 
-# Architecture Documentation (Internal)
-TATTVA*.md
+# Architecture Documentation (Internal) - All MD files except README
 *.md
+!README.md
 
 # Demo and Testing (Internal Development Only)
 demo/
 test_*.py
 start_tattvaai.py
-RUN_*.md
 
 # Development Tools & Scripts
 casting.yaml*

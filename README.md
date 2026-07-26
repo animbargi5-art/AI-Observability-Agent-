@@ -1,10 +1,10 @@
-<div align="center">
-
-# 🚀 TattvaAI
+# 🚀 TattvaAI - SigNoz Hackathon Submission
 
 ### AI-Powered Autonomous Incident Investigation Platform
 
-**Transforming observability data into actionable root cause analysis using AI Agents, LangGraph, and SigNoz.**
+**"Agents of SigNoz" Hackathon Entry**
+
+**Transforming observability data into actionable intelligence using AI Agents, LangGraph, and SigNoz MCP integration.**
 
 ---
 
@@ -12,19 +12,144 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?style=for-the-badge&logo=fastapi)
 ![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react)
 ![LangGraph](https://img.shields.io/badge/LangGraph-Orchestration-orange?style=for-the-badge)
-![SigNoz](https://img.shields.io/badge/SigNoz-Observability-purple?style=for-the-badge)
+![SigNoz](https://img.shields.io/badge/SigNoz-MCP_Integration-purple?style=for-the-badge)
 ![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-Tracing-green?style=for-the-badge)
-![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?style=for-the-badge&logo=docker)
+![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker)
 
 ---
 
-**Built for AI-powered Observability and Intelligent Incident Investigation**
+## 🎯 Hackathon Quick Start (For Judges)
 
-</div>
+### 1-Command Demo Setup
+```bash
+git clone https://github.com/animbargi5-art/AI-Observability-Agent-.git TattvaAI
+cd TattvaAI
+docker compose up --build -d
+```
+
+### Verify Demo Ready
+```bash
+curl http://localhost:8000/health
+curl http://localhost:8000/dashboard/statistics
+```
+
+### Access Points
+- **📊 TattvaAI Dashboard**: http://localhost:3001
+- **🔧 Backend API**: http://localhost:8000
+- **📚 API Documentation**: http://localhost:8000/docs
+- **📈 SigNoz**: http://localhost:8080
 
 ---
 
-# 📖 Overview
+## 🏆 SigNoz Hackathon Alignment
+
+### ✅ Agent-Native Observability Workflows
+- **Specialized AI Agents**: Trace Agent, Logs Agent, Metrics Agent, Dependency Agent
+- **Autonomous Investigation**: No manual dashboard analysis required
+- **Evidence-Driven Reasoning**: Transparent AI decision making
+
+### ✅ SRE Copilot Capabilities  
+- **Automated Incident Investigation**: Replaces manual SRE work
+- **Root Cause Analysis**: AI determines probable causes with confidence scores
+- **Historical Memory**: Learns from past incidents for pattern recognition
+- **Actionable Recommendations**: Specific remediation steps
+
+### ✅ AI/LLM Observability Dashboard
+- **Investigation Timeline**: Real-time AI agent execution visualization
+- **Evidence Collection Display**: Shows correlated telemetry findings
+- **Confidence Scoring**: Quantified AI certainty levels
+- **Explainable Process**: Transparent investigation workflow
+
+### ✅ Native SigNoz Integration
+- **Model Context Protocol (MCP)**: Official SigNoz MCP Server integration
+- **Full Telemetry Access**: Traces, logs, metrics, dependencies, alerts
+- **Provider Independence**: Clean abstraction for future extensibility
+
+---
+
+---
+
+## 🎭 Live Demo Scenarios
+
+### Scenario: E-commerce Checkout Failure ⚡
+**Problem**: Customers cannot complete purchases  
+**Investigation**: TattvaAI automatically:
+
+1. **Trace Agent** finds 4.8s latency (normal: 120ms) - **400% increase**
+2. **Logs Agent** detects Redis timeout errors (143 occurrences)  
+3. **Metrics Agent** shows 18% error rate, 98% Redis CPU usage
+4. **Dependency Agent** maps Gateway → Payment → Redis failure chain
+5. **Historical Agent** matches 94% similarity to incident #381
+6. **Correlation Engine** combines evidence across all sources
+7. **Root Cause**: Redis latency → Payment timeout → Checkout failure
+8. **Confidence**: 96% | **Investigation Time**: <30 seconds
+
+### Generated Recommendations:
+- **Immediate**: Restart Redis cluster
+- **Short-term**: Increase timeout thresholds  
+- **Long-term**: Implement circuit breaker pattern
+- **Monitoring**: Add Redis latency alerts
+
+---
+
+## 🔧 Technical Implementation
+
+### Multi-Agent Architecture
+```
+Incident Report
+       ↓
+  LangGraph Workflow
+       ↓
+   ┌─────────────────┐
+   │  AI Agent Pool  │
+   │                 │
+   │ • Trace Agent   │  ← Analyzes distributed traces  
+   │ • Logs Agent    │  ← Searches error patterns
+   │ • Metrics Agent │  ← Monitors performance data
+   │ • Dependency    │  ← Maps service relationships
+   │ • Alert Agent   │  ← Processes active alerts
+   │ • Historical    │  ← Matches past incidents
+   └─────────────────┘
+       ↓
+  Evidence Collection
+       ↓
+  Correlation Engine  
+       ↓
+  Root Cause Analysis (96% confidence)
+       ↓
+  Actionable Recommendations
+```
+
+### SigNoz Integration via MCP
+```python
+# Native MCP integration with SigNoz
+class MCPGateway:
+    def execute_tool(self, tool_name: str, params: dict):
+        return self.mcp_client.call_tool(tool_name, params)
+        
+# Example: Trace analysis  
+traces = mcp_gateway.execute_tool("search_traces", {
+    "service_name": "checkout-service",
+    "time_range": "1h"
+})
+```
+
+### Evidence-Driven Reasoning
+```python
+@dataclass
+class Evidence:
+    source: str          # "TraceAgent", "LogsAgent"
+    category: str        # "Performance", "Error"  
+    severity: str        # "HIGH", "MEDIUM", "LOW"
+    finding: str         # "Latency increased 400%"
+    confidence: float    # 0.95
+    data: dict          # Supporting telemetry
+    timestamp: datetime
+```
+
+---
+
+## 📖 Problem & Solution
 
 Modern cloud-native applications generate enormous amounts of telemetry.
 

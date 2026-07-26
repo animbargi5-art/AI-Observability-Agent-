@@ -2692,3 +2692,4 @@ class CustomAgent(BaseAgent):
 **🏆 Built for the SigNoz Observability Hackathon 2026 - Track 01: AI & Agent Observability**
 
 *"Multi-Agent Intelligence for Autonomous Incident Investigation - See Inside Your AI Agents, Understand Their Decisions, Trust Their Conclusions"*
+

@@ -700,3 +700,4 @@ Every major AI conclusion is paired with the evidence and reasoning that produce
 ---
 
 *This UI/UX architecture document serves as the foundation for TattvaAI's user interface design and implementation, ensuring a consistent, accessible, and efficient experience for incident investigation workflows.*
+

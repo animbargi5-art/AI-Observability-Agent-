@@ -2202,3 +2202,4 @@ TattvaAI doesn't just monitor systems—it **thinks about them intelligently**, 
 **🏆 Built for SigNoz Observability Hackathon 2026 - Track 01: AI & Agent Observability**
 
 *"Multi-Agent System Architecture for Autonomous Incident Investigation - Transparent, Explainable, and Intelligent"*
+

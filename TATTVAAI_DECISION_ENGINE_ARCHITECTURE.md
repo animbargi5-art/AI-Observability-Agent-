@@ -1902,3 +1902,4 @@ The Decision Engine demonstrates that TattvaAI doesn't just collect telemetry or
 **🏆 Built for SigNoz Observability Hackathon 2026 - Track 01: AI & Agent Observability**
 
 *"Autonomous Decision Intelligence for Incident Investigation - Making AI Reasoning Transparent, Explainable, and Trustworthy"*
+
