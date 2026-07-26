@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 
 from app.coordinator.incident_coordinator import IncidentCoordinator
 from app.services.investigation_service import InvestigationService
@@ -14,9 +14,9 @@ service = InvestigationService()
 
 
 @router.post("/start")
-async def start():
+async def start(service_name: str = Query(default="gateway", min_length=1)):
 
-    result = await coordinator.start_investigation()
+    result = await coordinator.start_investigation(service_name=service_name)
 
     return result
 

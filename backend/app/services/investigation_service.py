@@ -1,62 +1,105 @@
-from app.database.session import SessionLocal
-from app.database.models import Investigation
+"""
+===============================================================================
+TattvaAI - Investigation Service
+===============================================================================
 
-from app.database.investigation_repository import InvestigationRepository
+Purpose
+-------
+Business service responsible for investigation persistence.
+
+Responsibilities
+----------------
+• Save investigation reports
+• Retrieve investigations
+• Delete investigations
+
+This service contains NO database logic.
+
+Architecture
+------------
+Coordinator
+      ↓
+InvestigationService
+      ↓
+InvestigationRepository
+      ↓
+Database
+
+===============================================================================
+"""
+
+from __future__ import annotations
+
+from app.database.investigation_repository import (
+    InvestigationRepository,
+)
+
+from app.models.investigation_report import (
+    InvestigationReport,
+)
+
+
 class InvestigationService:
+    """
+    Business service for investigation persistence.
+    """
 
-    def __init__(self):
-
-        self.db = SessionLocal()
+    def __init__(self) -> None:
 
         self.repository = InvestigationRepository()
 
-    def save(self, report):
+    # -------------------------------------------------------------------------
+    # Save
+    # -------------------------------------------------------------------------
 
-        incident = report.get("incident", {})
+    def save(
+        self,
+        report: InvestigationReport,
+    ):
+        """
+        Save an investigation report.
+        """
 
-        investigation = Investigation(
-
-            incident_id=incident.get("id", "UNKNOWN"),
-
-            title=incident.get("title", "Unknown Incident"),
-
-            severity=incident.get("severity", "UNKNOWN"),
-
-            status=incident.get("status", "UNKNOWN"),
-
-            confidence=report.get("confidence", 0),
-
-            report=report
-
+        return self.repository.save_investigation(
+            report
         )
 
-        self.db.add(investigation)
+    # -------------------------------------------------------------------------
+    # Retrieve
+    # -------------------------------------------------------------------------
 
-        self.db.commit()
-
-        self.db.refresh(investigation)
-
-        return investigation
-
-    def close(self):
-
-        self.db.close()
-
-    def save_investigation(self, report):
-
-        return self.repository.save_investigation(report)
-
-    def get_all_investigations(self):
+    def get_all_investigations(
+        self,
+    ):
+        """
+        Return every stored investigation.
+        """
 
         return self.repository.get_all_investigations()
 
-    def get_investigation_by_id(self, investigation_id):
+    def get_investigation_by_id(
+        self,
+        investigation_id: int,
+    ):
+        """
+        Retrieve one investigation.
+        """
 
         return self.repository.get_investigation_by_id(
             investigation_id
         )
 
-    def delete_investigation(self, investigation_id):
+    # -------------------------------------------------------------------------
+    # Delete
+    # -------------------------------------------------------------------------
+
+    def delete_investigation(
+        self,
+        investigation_id: int,
+    ):
+        """
+        Delete one investigation.
+        """
 
         return self.repository.delete_investigation(
             investigation_id

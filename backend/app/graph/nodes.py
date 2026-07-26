@@ -1,81 +1,165 @@
-from app.graph.state import GraphState
+"""
+===============================================================================
+TattvaAI - Graph Nodes
+===============================================================================
+
+Purpose
+-------
+Defines every LangGraph node used in the investigation workflow.
+
+Each node is only responsible for invoking one Agent or Engine.
+
+Nodes should NEVER:
+
+❌ Query SigNoz directly
+❌ Perform AI reasoning
+❌ Parse telemetry
+❌ Generate reports themselves
+
+Those responsibilities belong to the underlying agents and engines.
+
+Flow
+----
+InvestigationState
+        ↓
+Trace Node
+        ↓
+Logs Node
+        ↓
+Metrics Node
+        ↓
+Dependency Node
+        ↓
+Historical Node
+        ↓
+Alert Node
+        ↓
+Investigation Node
+        ↓
+Report Node
+
+===============================================================================
+"""
+
+from __future__ import annotations
+
+from app.graph.state import InvestigationState
+
+from app.agents.trace_agent import TraceAgent
+from app.agents.logs_agent import LogsAgent
+from app.agents.metrics_agent import MetricsAgent
+from app.agents.dependency_agent import DependencyAgent
+from app.agents.historical_agent import HistoricalAgent
+from app.agents.alert_agent import AlertAgent
+from app.agents.report_agent import ReportAgent
+
+from app.decision.investigation_engine import InvestigationEngine
 
 
-def trace_agent(state: GraphState):
+# ============================================================================
+# Agent Instances
+# ============================================================================
 
-    print("Trace Agent Executed")
+trace_agent = TraceAgent()
 
-    return {
-        "traces": [
-            {
-                "trace_id": "trace-001",
-                "latency": "180ms",
-                "status": "OK"
-            }
-        ]
-    }
+logs_agent = LogsAgent()
 
+metrics_agent = MetricsAgent()
 
-def logs_agent(state: GraphState):
+dependency_agent = DependencyAgent()
 
-    print("Logs Agent Executed")
+historical_agent = HistoricalAgent()
 
-    return {
-        "logs": [
-            {
-                "level": "ERROR",
-                "message": "Database timeout"
-            }
-        ]
-    }
+alert_agent = AlertAgent()
+
+investigation_engine = InvestigationEngine()
+
+report_agent = ReportAgent()
 
 
-def metrics_agent(state: GraphState):
+# ============================================================================
+# Trace
+# ============================================================================
 
-    print("Metrics Agent Executed")
+async def trace_node(
+    state: InvestigationState,
+) -> InvestigationState:
 
-    return {
-        "metrics": [
-            {
-                "cpu": "72%",
-                "memory": "61%"
-            }
-        ]
-    }
+    return await trace_agent.run(state)
 
 
-def dependency_agent(state: GraphState):
+# ============================================================================
+# Logs
+# ============================================================================
 
-    print("Dependency Agent Executed")
+async def logs_node(
+    state: InvestigationState,
+) -> InvestigationState:
 
-    return {
-        "dependencies": [
-            {
-                "service": "postgres",
-                "status": "healthy"
-            }
-        ]
-    }
+    return await logs_agent.run(state)
 
 
-def decision_engine(state: GraphState):
+# ============================================================================
+# Metrics
+# ============================================================================
 
-    print("Decision Engine Executed")
+async def metrics_node(
+    state: InvestigationState,
+) -> InvestigationState:
 
-    return {
-        "hypotheses": [
-            "High database latency is causing the incident."
-        ]
-    }
+    return await metrics_agent.run(state)
 
 
-def recommendation_agent(state: GraphState):
+# ============================================================================
+# Dependencies
+# ============================================================================
 
-    print("Recommendation Agent Executed")
+async def dependency_node(
+    state: InvestigationState,
+) -> InvestigationState:
 
-    return {
-        "recommendations": [
-            "Scale the database",
-            "Check slow SQL queries"
-        ]
-    }
+    return await dependency_agent.run(state)
+
+
+# ============================================================================
+# Historical
+# ============================================================================
+
+async def historical_node(
+    state: InvestigationState,
+) -> InvestigationState:
+
+    return await historical_agent.run(state)
+
+
+# ============================================================================
+# Alerts
+# ============================================================================
+
+async def alert_node(
+    state: InvestigationState,
+) -> InvestigationState:
+
+    return await alert_agent.run(state)
+
+
+# ============================================================================
+# Investigation
+# ============================================================================
+
+async def investigation_node(
+    state: InvestigationState,
+) -> InvestigationState:
+
+    return investigation_engine.execute(state)
+
+
+# ============================================================================
+# Report
+# ============================================================================
+
+async def report_node(
+    state: InvestigationState,
+) -> InvestigationState:
+
+    return await report_agent.run(state)

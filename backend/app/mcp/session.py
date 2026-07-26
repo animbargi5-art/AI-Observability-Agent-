@@ -1,110 +1,177 @@
+"""
+===============================================================================
+TattvaAI - MCP Session Manager
+===============================================================================
+
+Maintains the lifecycle and state of MCP client connections.
+
+Responsibilities
+----------------
+• Connection state
+• Session lifecycle
+• Health status
+• Connection timestamps
+• Async synchronization
+
+This module is provider-independent.
+
+===============================================================================
+"""
+
 from __future__ import annotations
 
-import os
-import httpx
+import asyncio
+from datetime import datetime
+from typing import Optional
 
-from contextlib import AsyncExitStack
+from app.core.logger import logger
 
-from mcp import ClientSession
-
-from mcp.client.streamable_http import (
-    streamable_http_client,
-)
-
-from app.mcp.config import MCPConfig
 
 class MCPSession:
+    """
+    Stores the lifecycle state of one MCP connection.
+    """
 
-    def __init__(self):
+    def __init__(self) -> None:
 
-        self.api_key = MCPConfig.API_KEY
+        self.connected: bool = False
 
-        self.exit_stack = AsyncExitStack()
+        self.initialized: bool = False
+
+        self.server_url: Optional[str] = None
+
+        self.connected_at: Optional[datetime] = None
+
+        self.last_activity: Optional[datetime] = None
 
         self.client = None
 
-        self.read_stream = None
+        self.lock = asyncio.Lock()
 
-        self.write_stream = None
+    # -------------------------------------------------------------------------
+    # Connection State
+    # -------------------------------------------------------------------------
 
-        self.session = None
-    
-    async def connect(self):
+    async def connect(
+        self,
+        client,
+        server_url: str,
+    ) -> None:
+        """
+        Register a connected MCP client.
+        """
 
-        if self.session is not None:
-            return
+        async with self.lock:
 
-        headers = {
-            "SIGNOZ-API-KEY": MCPConfig.API_KEY,
+            self.client = client
+
+            self.server_url = server_url
+
+            self.connected = True
+
+            self.connected_at = datetime.utcnow()
+
+            self.last_activity = datetime.utcnow()
+
+            logger.info(
+                "MCP session connected."
+            )
+
+    async def disconnect(self) -> None:
+        """
+        Clear the current session.
+        """
+
+        async with self.lock:
+
+            self.client = None
+
+            self.connected = False
+
+            self.initialized = False
+
+            self.connected_at = None
+
+            self.last_activity = None
+
+            logger.info(
+                "MCP session disconnected."
+            )
+
+    async def mark_initialized(self) -> None:
+        """
+        Mark the MCP protocol as initialized.
+        """
+
+        async with self.lock:
+
+            self.initialized = True
+
+            self.last_activity = datetime.utcnow()
+
+    async def heartbeat(self) -> None:
+        """
+        Update last activity timestamp.
+        """
+
+        async with self.lock:
+
+            self.last_activity = datetime.utcnow()
+
+    # -------------------------------------------------------------------------
+    # Status
+    # -------------------------------------------------------------------------
+
+    def is_connected(self) -> bool:
+
+        return self.connected
+
+    def is_initialized(self) -> bool:
+
+        return self.initialized
+
+    def get_client(self):
+
+        return self.client
+
+    def get_server_url(self) -> Optional[str]:
+
+        return self.server_url
+
+    def get_connected_at(self) -> Optional[datetime]:
+
+        return self.connected_at
+
+    def get_last_activity(self) -> Optional[datetime]:
+
+        return self.last_activity
+
+    # -------------------------------------------------------------------------
+    # Health
+    # -------------------------------------------------------------------------
+
+    def health(self) -> dict:
+        """
+        Return current session health.
+        """
+
+        return {
+
+            "connected": self.connected,
+
+            "initialized": self.initialized,
+
+            "server_url": self.server_url,
+
+            "connected_at": self.connected_at,
+
+            "last_activity": self.last_activity,
+
         }
 
-        print("=" * 60)
-        print("SERVER URL :", MCPConfig.SERVER_URL)
-        print("API KEY    :", repr(self.api_key))
-        print("HEADERS:", headers)
-        print("=" * 60)
 
-        http_client = httpx.AsyncClient(
-            headers=headers,
-            timeout=httpx.Timeout(
-                MCPConfig.TIMEOUT,
-                read=300.0,
-            ),
-        )
+#
+# Singleton session
+#
 
-        self.client = http_client
-
-        transport = streamable_http_client(
-            MCPConfig.SERVER_URL,
-            http_client=http_client,
-        )
-
-        (
-            self.read_stream,
-            self.write_stream,
-            _,
-        ) = await self.exit_stack.enter_async_context(
-            transport
-        )
-
-        self.session = ClientSession(
-            self.read_stream,
-            self.write_stream,
-        )
-
-        await self.exit_stack.enter_async_context(
-            self.session
-        )
-
-        await self.session.initialize()
-
-    async def disconnect(self):
-
-        await self.exit_stack.aclose()
-
-        self.client = None
-        self.read_stream = None
-        self.write_stream = None
-        self.session = None
-
-        self.exit_stack = AsyncExitStack()
-
-    async def list_tools(self):
-
-        return await self.session.list_tools()
-
-    async def call_tool(
-        self,
-        name: str,
-        arguments: dict,
-    ):
-
-        print("=" * 60)
-        print("CALLING TOOL:", name)
-        print("SESSION:", self.session)
-        print("=" * 60)
-
-        return await self.session.call_tool(
-            name=name,
-            arguments=arguments,
-        )
+mcp_session = MCPSession()

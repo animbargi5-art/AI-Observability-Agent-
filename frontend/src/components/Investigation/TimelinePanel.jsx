@@ -48,19 +48,19 @@ export default function TimelinePanel({
 
                             <h3>
 
-                                {event.title}
+                                Investigation event
 
                             </h3>
 
                             <p>
 
-                                {event.description}
+                                {event}
 
                             </p>
 
                             <small>
 
-                                {event.time}
+                                Step {index + 1}
 
                             </small>
 

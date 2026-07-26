@@ -1,292 +1,192 @@
-import json
+"""
+===============================================================================
+TattvaAI - Trace Agent
+===============================================================================
 
-from mcp.types import TextContent
+Purpose
+-------
+Analyzes distributed traces collected from SigNoz and generates
+investigation evidence.
+
+Responsibilities
+----------------
+• Retrieve normalized traces
+• Detect slow APIs
+• Detect HTTP errors
+• Generate Evidence objects
+• Update InvestigationState
+
+Flow
+----
+InvestigationState
+        ↓
+TraceTool
+        ↓
+List[Trace]
+        ↓
+Evidence
+        ↓
+InvestigationState
+
+===============================================================================
+"""
+
+from __future__ import annotations
 
 from app.agents.base_agent import BaseAgent
+from app.models.evidence import Evidence
+from app.schemas.investigation_state import InvestigationState
 from app.tools.trace_tool import TraceTool
-from app.memory.investigation_memory import InvestigationMemory
-
-
-HEALTHY_THRESHOLD = 200
-WARNING_THRESHOLD = 500
-SLOW_API_THRESHOLD = 1000
 
 
 class TraceAgent(BaseAgent):
     """
-    AI Agent responsible for fetching and analyzing traces
-    from SigNoz.
+    AI agent responsible for trace investigation.
     """
 
-    def __init__(self, memory=None):
+    CRITICAL_THRESHOLD = 1000
+    WARNING_THRESHOLD = 500
+    HEALTHY_THRESHOLD = 200
+
+    def __init__(self):
 
         super().__init__(
-            name="Trace Investigation Agent",
-            description="Fetches and analyzes distributed traces from SigNoz."
+            name="Trace Agent",
+            description="Analyzes distributed traces."
         )
 
         self.trace_tool = TraceTool()
 
-        if memory is None:
-            self.memory = InvestigationMemory()
-        else:
-            self.memory = memory
+    async def execute(
+        self,
+        state: InvestigationState,
+    ) -> InvestigationState:
 
-    async def fetch_traces(self):
-        return await self.trace_tool.execute()
-
-    async def execute(self):
-
-        traces = await self.fetch_traces()
-
-        payload = {}
-
-        if hasattr(traces, "content"):
-
-            for item in traces.content:
-
-                if isinstance(item, TextContent):
-
-                    try:
-                        payload = json.loads(item.text)
-                        break
-
-                    except Exception as e:
-                        print(f"JSON Parse Error: {e}")
-
-        rows = (
-            payload.get("data", {})
-                   .get("data", {})
-                   .get("results", [{}])[0]
-                   .get("rows", [])
+        self.log(
+            f"Investigating traces for {state.service_name}"
         )
 
-        print(f"Trace rows received: {len(rows)}")
-
-        incidents = []
-
-        for row in rows:
-
-            data = row.get("data", {})
-
-            print("\n----------------------------")
-            print("Service :", data.get("service.name"))
-            print("Endpoint:", data.get("name"))
-            print("Method  :", data.get("http_method"))
-            print("Status  :", data.get("response_status_code"))
-            print("----------------------------")
-
-            endpoint = data.get("name", "")
-            service = data.get("service.name", "")
-
-            # --------------------------------------------------
-            # Ignore internal telemetry
-            # --------------------------------------------------
-
-            if not endpoint:
-                continue
-
-            if endpoint.startswith("POST /investigation"):
-                continue
-
-            if endpoint.endswith("http send"):
-                continue
-
-            if "mcp" in endpoint.lower():
-                continue
-
-            if service == "tattva-ai-backend" and endpoint.endswith("http send"):
-                continue
-
-            incidents.append({
-
-                "service": service,
-
-                "endpoint": endpoint,
-
-                "method": (
-                    data.get("http_method")
-                    or data.get("http.request.method")
-                    or ""
-                ),
-
-                "status": (
-                    data.get("response_status_code")
-                    or data.get("http.response.status_code")
-                    or ""
-                ),
-
-                "duration_ms": round(
-                    data.get("duration_nano", 0) / 1_000_000,
-                    2
-                ),
-
-                "trace_id": data.get("trace_id"),
-
-                "timestamp": (
-                    data.get("timestamp")
-                    or row.get("timestamp")
-                )
-
-            })
-
-        print(f"Valid incidents: {len(incidents)}")
-
-        findings = self.detect_incidents(incidents)
-
-        print(f"Findings generated: {len(findings)}")
-
-        for finding in findings:
-            self.memory.add_evidence(finding)
-
-        self.memory.add_timeline_event(
-            "Trace investigation completed."
+        traces = await self.trace_tool.execute(
+            service_name=state.service_name
         )
 
-        if findings:
+        state.traces = traces
 
-            self.memory.set_confidence(
+        highest_confidence = state.confidence
 
-                max(
-                    finding["confidence"]
-                    for finding in findings
-                )
+        for trace in traces:
 
+            evidence = self.analyze_trace(trace)
+
+            if evidence is None:
+                continue
+
+            self.add_evidence(
+                state,
+                evidence,
             )
 
-        return {
-
-            "total_traces": len(incidents),
-
-            "incidents_found": len(findings),
-
-            "findings": findings
-
-        }
-
-    def detect_incidents(self, incidents):
-
-        findings = []
-
-        for incident in incidents:
-
-            duration = incident.get("duration_ms", 0)
-
-            status = str(
-                incident.get("status", "")
+            highest_confidence = max(
+                highest_confidence,
+                evidence.confidence,
             )
 
-            if duration > SLOW_API_THRESHOLD:
+        self.set_confidence(
+            state,
+            highest_confidence,
+        )
 
-                findings.append({
+        self.add_timeline(
+            state,
+            f"Trace Agent analyzed {len(traces)} traces."
+        )
 
-                    "severity": "HIGH",
+        return state
 
-                    "confidence": 95,
+    # -----------------------------------------------------------------
 
-                    "category": "Performance",
+    def analyze_trace(
+        self,
+        trace,
+    ) -> Evidence | None:
 
-                    "root_service": incident["service"],
+        severity = None
+        evidence_type = None
+        confidence = 0
 
-                    "type": "Critical Slow API",
+        # ---------------------------------------------------------
+        # Performance
+        # ---------------------------------------------------------
 
-                    "message": (
-                        f"{incident['endpoint']} took "
-                        f"{duration:.2f} ms"
-                    ),
+        if trace.duration_ms >= self.CRITICAL_THRESHOLD:
 
-                    "trace": incident
+            severity = "HIGH"
+            evidence_type = "Critical Slow API"
+            confidence = 95
 
-                })
+        elif trace.duration_ms >= self.WARNING_THRESHOLD:
 
-            elif duration > WARNING_THRESHOLD:
+            severity = "MEDIUM"
+            evidence_type = "Slow API"
+            confidence = 85
 
-                findings.append({
+        elif trace.duration_ms >= self.HEALTHY_THRESHOLD:
 
-                    "severity": "MEDIUM",
+            severity = "LOW"
+            evidence_type = "Performance Warning"
+            confidence = 70
 
-                    "confidence": 85,
+        # ---------------------------------------------------------
+        # HTTP Status
+        # ---------------------------------------------------------
 
-                    "category": "Performance",
+        if trace.failed:
 
-                    "root_service": incident["service"],
+            severity = "CRITICAL"
+            evidence_type = "Server Error"
+            confidence = 98
 
-                    "type": "Slow API",
+        elif trace.client_error:
 
-                    "message": (
-                        f"{incident['endpoint']} took "
-                        f"{duration:.2f} ms"
-                    ),
+            severity = "MEDIUM"
+            evidence_type = "Client Error"
+            confidence = 80
 
-                    "trace": incident
+        if evidence_type is None:
+            return None
 
-                })
+        return Evidence(
 
-            elif duration > HEALTHY_THRESHOLD:
+            source="trace",
 
-                findings.append({
+            category="Performance",
 
-                    "severity": "LOW",
+            type=evidence_type,
 
-                    "confidence": 70,
+            severity=severity,
 
-                    "category": "Performance",
+            confidence=confidence,
 
-                    "root_service": incident["service"],
+            service_name=trace.service_name,
 
-                    "type": "Performance Warning",
+            endpoint=trace.endpoint,
 
-                    "message": (
-                        f"{incident['endpoint']} took "
-                        f"{duration:.2f} ms"
-                    ),
+            operation=trace.operation_name,
 
-                    "trace": incident
+            title=evidence_type,
 
-                })
+            summary=(
+                f"{trace.operation_name} "
+                f"took {trace.duration_ms:.2f} ms "
+                f"with status {trace.status_code}"
+            ),
 
-            if status.startswith("5"):
+            trace_id=trace.trace_id,
 
-                findings.append({
+            span_id=trace.span_id,
 
-                    "severity": "CRITICAL",
+            timestamp=trace.timestamp,
 
-                    "confidence": 98,
+            raw=trace.model_dump(),
 
-                    "category": "Application",
-
-                    "root_service": incident["service"],
-
-                    "type": "Server Error",
-
-                    "message": (
-                        f"{incident['endpoint']} returned {status}"
-                    ),
-
-                    "trace": incident
-
-                })
-
-            elif status.startswith("4"):
-
-                findings.append({
-
-                    "severity": "MEDIUM",
-
-                    "confidence": 80,
-
-                    "category": "Application",
-
-                    "root_service": incident["service"],
-
-                    "type": "Client Error",
-
-                    "message": (
-                        f"{incident['endpoint']} returned {status}"
-                    ),
-
-                    "trace": incident
-
-                })
-
-        return findings
+        )

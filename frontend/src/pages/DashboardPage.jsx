@@ -8,7 +8,7 @@ import {
 import DashboardHeader from "../components/Dashboard/DashboardHeader";
 import InvestigationList from "../components/Dashboard/InvestigationList";
 import StatisticsCards from "../components/Dashboard/StatisticsCards";
-import RecentIncidents from "../components/Dashboard/RecentIncidents";
+import RecentIncidents from "../components/Dashboard/RecentIncident";
 import InvestigationProgress from "../components/Dashboard/InvestigationProgress";
 
 import InvestigationStatus from "../components/Dashboard/InvestigationStatus";

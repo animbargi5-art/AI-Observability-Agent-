@@ -1,113 +1,175 @@
+"""
+===============================================================================
+TattvaAI - Historical Agent
+===============================================================================
+
+Purpose
+-------
+Analyzes historical telemetry and previous incidents to identify recurring
+patterns and generate investigation evidence.
+
+Responsibilities
+----------------
+• Retrieve historical traces
+• Compare current and historical incidents
+• Detect recurring failures
+• Generate Evidence objects
+• Update InvestigationState
+
+Flow
+----
+InvestigationState
+        ↓
+HistoricalTool
+        ↓
+List[Trace]
+        ↓
+Evidence
+        ↓
+InvestigationState
+
+===============================================================================
+"""
+
+from __future__ import annotations
+
 from app.agents.base_agent import BaseAgent
-from app.tools.dependency_tool import DependencyTool
-from app.memory.investigation_memory import InvestigationMemory
+from app.models.evidence import Evidence
+from app.schemas.investigation_state import InvestigationState
+from app.tools.historical_tool import HistoricalTool
 
 
-class DependencyAgent(BaseAgent):
+class HistoricalAgent(BaseAgent):
     """
-    Collects service dependency information and stores it
-    inside the shared investigation memory.
+    AI agent responsible for historical incident analysis.
     """
 
-    def __init__(self, memory=None):
+    def __init__(self):
 
         super().__init__(
-            name="Dependency Agent",
-            description="Analyzes service dependencies from SigNoz."
+            name="Historical Agent",
+            description="Analyzes historical telemetry."
         )
 
-        self.dependency_tool = DependencyTool()
+        self.history_tool = HistoricalTool()
 
-        if memory is None:
-            self.memory = InvestigationMemory()
-        else:
-            self.memory = memory
+    async def execute(
+        self,
+        state: InvestigationState,
+    ) -> InvestigationState:
 
-    async def fetch_dependencies(self):
-
-        return await self.dependency_tool.execute()
-
-    async def execute(self):
-
-        result = await self.fetch_dependencies()
-
-        dependencies = result.get("dependencies", [])
-
-        print("\n========== DEPENDENCY AGENT ==========")
-        print(f"Dependencies Found: {len(dependencies)}")
-        print("======================================\n")
-
-        findings = []
-
-        for dependency in dependencies:
-
-            finding = {
-
-                "severity": "LOW",
-
-                "confidence": 70,
-
-                "category": "Infrastructure",
-
-                "type": "Service Dependency",
-
-                "root_service": dependency.get("source"),
-
-                "source": dependency.get("source"),
-
-                "target": dependency.get("target"),
-
-                "latency_ms": dependency.get(
-                    "latency_ms",
-                    0
-                ),
-
-                "error_rate": dependency.get(
-                    "error_rate",
-                    0
-                )
-
-            }
-
-            findings.append(finding)
-
-        # ---------------------------------------------
-        # Save evidence
-        # ---------------------------------------------
-
-        for finding in findings:
-
-            self.memory.add_evidence(finding)
-
-        # ---------------------------------------------
-        # Timeline
-        # ---------------------------------------------
-
-        self.memory.add_timeline_event(
-            "Dependency analysis completed."
+        self.log(
+            f"Searching historical incidents for {state.service_name}"
         )
 
-        # ---------------------------------------------
-        # Confidence
-        # ---------------------------------------------
+        history = await self.history_tool.execute(
+            service_name=state.service_name,
+        )
 
-        if findings:
+        state.historical_incidents = history
 
-            highest = max(
-                finding["confidence"]
-                for finding in findings
+        highest_confidence = state.confidence
+
+        for trace in history:
+
+            evidence = self.analyze_history(trace)
+
+            if evidence is None:
+                continue
+
+            self.add_evidence(
+                state,
+                evidence,
             )
 
-            self.memory.set_confidence(highest)
+            highest_confidence = max(
+                highest_confidence,
+                evidence.confidence,
+            )
 
-        print(
-            f"Dependency Findings Stored: {len(findings)}"
+        self.set_confidence(
+            state,
+            highest_confidence,
         )
 
-        return {
+        self.add_timeline(
+            state,
+            f"Historical Agent analyzed {len(history)} historical traces."
+        )
 
-            "total_dependencies": len(findings),
+        return state
 
-            "findings": findings
+    # -----------------------------------------------------------------
+    # Historical Analysis
+    # -----------------------------------------------------------------
 
-        }
+    def analyze_history(
+        self,
+        trace,
+    ) -> Evidence | None:
+
+        if not trace.slow and not trace.failed:
+            return None
+
+        if trace.failed:
+
+            evidence_type = "Recurring Application Failure"
+
+            severity = "HIGH"
+
+            confidence = 92
+
+            summary = (
+                f"Historical trace shows repeated server failures "
+                f"for '{trace.operation_name}'."
+            )
+
+        else:
+
+            evidence_type = "Recurring Performance Issue"
+
+            severity = "MEDIUM"
+
+            confidence = 80
+
+            summary = (
+                f"Historical trace indicates repeated latency "
+                f"on '{trace.operation_name}'."
+            )
+
+        return Evidence(
+
+            source="history",
+
+            category="Historical",
+
+            type=evidence_type,
+
+            severity=severity,
+
+            confidence=confidence,
+
+            service_name=trace.service_name,
+
+            endpoint=trace.endpoint,
+
+            operation=trace.operation_name,
+
+            title=evidence_type,
+
+            summary=summary,
+
+            recommendation=(
+                "Compare current deployment with previous incidents "
+                "and review recurring failure patterns."
+            ),
+
+            trace_id=trace.trace_id,
+
+            span_id=trace.span_id,
+
+            timestamp=trace.timestamp,
+
+            raw=trace.model_dump(),
+
+        )

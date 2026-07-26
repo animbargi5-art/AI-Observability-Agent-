@@ -33,7 +33,7 @@ export default function CorrelationPanel({ investigation }) {
 
                             <div className="correlation-header">
 
-                                <h3>{item.service}</h3>
+                                <h3>{item.service_name}</h3>
 
                                 <span className={`severity ${item.severity?.toLowerCase()}`}>
                                     {item.severity}
@@ -47,7 +47,7 @@ export default function CorrelationPanel({ investigation }) {
 
                                 {" "}
 
-                                {item.total_findings}
+                                {item.evidence_count}
 
                             </p>
 
@@ -58,9 +58,9 @@ export default function CorrelationPanel({ investigation }) {
                                 <ul>
 
                                     {
-                                        item.finding_types.map((type, i) => (
+                                        item.evidence.map((evidence, i) => (
 
-                                            <li key={i}>{type}</li>
+                                            <li key={i}>{evidence.type}</li>
 
                                         ))
                                     }

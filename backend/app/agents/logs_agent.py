@@ -1,219 +1,204 @@
-import json
+"""
+===============================================================================
+TattvaAI - Logs Agent
+===============================================================================
 
-from mcp.types import TextContent
+Purpose
+-------
+Analyzes application logs and converts them into investigation evidence.
+
+Responsibilities
+----------------
+• Retrieve normalized logs
+• Detect application errors
+• Detect warnings
+• Detect critical failures
+• Generate Evidence objects
+• Update InvestigationState
+
+Flow
+----
+InvestigationState
+        ↓
+LogsTool
+        ↓
+Log
+        ↓
+Evidence
+        ↓
+InvestigationState
+
+===============================================================================
+"""
+
+from __future__ import annotations
+
+from app.agents.base_agent import BaseAgent
+
+from app.models.log import Log
+from app.models.evidence import Evidence
+
+from app.schemas.investigation_state import InvestigationState
 
 from app.tools.logs_tool import LogsTool
-from app.agents.base_agent import BaseAgent
-from app.memory.investigation_memory import InvestigationMemory
 
 
 class LogsAgent(BaseAgent):
+    """
+    AI agent responsible for log analysis.
+    """
 
-    def __init__(self, memory=None):
+    def __init__(self) -> None:
 
         super().__init__(
             name="Logs Agent",
-            description="Analyzes application logs and detects log-based incidents."
+            description="Analyzes application logs.",
         )
 
         self.logs_tool = LogsTool()
 
-        if memory is None:
-            self.memory = InvestigationMemory()
-        else:
-            self.memory = memory
+    # -------------------------------------------------------------------------
+    # Execute
+    # -------------------------------------------------------------------------
 
-    async def fetch_logs(self):
+    async def execute(
+        self,
+        state: InvestigationState,
+    ) -> InvestigationState:
 
-        return await self.logs_tool.execute()
-
-    async def execute(self):
-
-        logs = await self.fetch_logs()
-
-        print("\n========== LOG RAW RESPONSE ==========")
-        print(type(logs))
-        print("======================================")
-
-        payload = {}
-
-        if hasattr(logs, "content"):
-
-            for item in logs.content:
-
-                if isinstance(item, TextContent):
-
-                    try:
-
-                        payload = json.loads(item.text)
-
-                        break
-
-                    except Exception as ex:
-
-                        print("JSON Parse Error:", ex)
-
-        print("Payload Keys:", payload.keys())
-
-        return self.analyze(payload)
-
-    def analyze(self, logs):
-
-        print("Payload Keys:", logs.keys())
-
-        rows = (
-            logs.get("data", {})
-                .get("data", {})
-                .get("results", [{}])[0]
-                .get("rows", [])
+        self.log(
+            f"Collecting logs for '{state.service_name}'."
         )
 
-        print(f"Rows Found: {len(rows)}")
-
-        if rows:
-
-            print("\n========== FIRST LOG ==========")
-            print(json.dumps(rows[0], indent=4))
-            print("================================\n")
-
-        else:
-
-            print("No log rows returned.")
-
-        findings = []
-
-        for row in rows:
-
-            data = row.get("data", {})
-
-            body = data.get("body", "")
-            body_lower = body.lower()
-
-            # Ignore MCP communication
-            if "localhost:8001/mcp" in body_lower:
-                continue
-
-            # Ignore investigation endpoint
-            if "/investigation/start" in body_lower:
-                continue
-
-            # Ignore httpx debug logs
-            if body.startswith("HTTP Request"):
-                continue
-
-            severity = (
-                data.get("severity_text", "")
-                .upper()
-            )
-
-            timestamp = row.get("timestamp")
-
-            service = (
-                data.get("resources_string", {})
-                    .get("service.name")
-            )
-
-            trace_id = data.get("trace_id")
-
-            span_id = data.get("span_id")
-
-            if severity == "ERROR":
-
-                findings.append({
-
-                    "severity": "CRITICAL",
-
-                    "confidence": 98,
-
-                    "type": "Application Error",
-
-                    "category": "Application",
-
-                    "root_service": service,
-
-                    "message": body,
-
-                    "trace": {
-
-                        "service": service,
-
-                        "endpoint": "Log Event",
-
-                        "status": "ERROR",
-
-                        "trace_id": trace_id,
-
-                        "span_id": span_id,
-
-                        "timestamp": timestamp,
-
-                    },
-
-                })
-
-            elif severity in ["WARN", "WARNING"]:
-
-                findings.append({
-
-                    "severity": "HIGH",
-
-                    "confidence": 90,
-
-                    "type": "Performance Warning",
-
-                    "category": "Application",
-
-                    "root_service": service,
-
-                    "message": body,
-
-                    "trace": {
-
-                        "service": service,
-
-                        "endpoint": "Log Event",
-
-                        "status": "WARN",
-
-                        "trace_id": trace_id,
-
-                        "span_id": span_id,
-
-                        "timestamp": timestamp,
-
-                    },
-
-                })
-
-        for finding in findings:
-
-            self.memory.add_evidence(finding)
-
-        self.memory.add_timeline_event(
-            "Logs investigation completed."
+        logs = await self.logs_tool.execute(
+            service_name=state.service_name,
         )
 
-        if findings:
+        state.logs = logs
+
+        highest_confidence = state.confidence
+
+        for log in logs:
+
+            evidence = self.analyze_log(log)
+
+            if evidence is None:
+                continue
+
+            self.add_evidence(
+                state,
+                evidence,
+            )
 
             highest_confidence = max(
-
-                finding["confidence"]
-
-                for finding in findings
-
+                highest_confidence,
+                evidence.confidence,
             )
 
-            self.memory.set_confidence(highest_confidence)
+        self.set_confidence(
+            state,
+            highest_confidence,
+        )
 
-        print("\n========== LOG AGENT FINISHED ==========")
-        print(f"Logs     : {len(rows)}")
-        print(f"Findings : {len(findings)}")
-        print("========================================\n")
+        self.add_timeline(
+            state,
+            f"Logs Agent analyzed {len(logs)} log(s).",
+        )
 
-        return {
+        return state
 
-            "total_logs": len(rows),
+    # -------------------------------------------------------------------------
+    # Log Analysis
+    # -------------------------------------------------------------------------
 
-            "findings": findings
+    def analyze_log(
+        self,
+        log: Log,
+    ) -> Evidence | None:
 
-        }
+        level = (log.level or "").upper()
+
+        if level == "ERROR":
+
+            return self.create_evidence(
+                log=log,
+                evidence_type="Application Error",
+                severity="HIGH",
+                confidence=95,
+                recommendation=(
+                    "Review stack trace, recent deployments, "
+                    "and related distributed traces."
+                ),
+            )
+
+        if level == "WARN":
+
+            return self.create_evidence(
+                log=log,
+                evidence_type="Application Warning",
+                severity="MEDIUM",
+                confidence=80,
+                recommendation=(
+                    "Inspect warning patterns before they become failures."
+                ),
+            )
+
+        if level == "FATAL":
+
+            return self.create_evidence(
+                log=log,
+                evidence_type="Critical Failure",
+                severity="CRITICAL",
+                confidence=99,
+                recommendation=(
+                    "Immediate investigation required. "
+                    "Check application health and dependencies."
+                ),
+            )
+
+        return None
+
+    # -------------------------------------------------------------------------
+    # Evidence Builder
+    # -------------------------------------------------------------------------
+
+    def create_evidence(
+        self,
+        log: Log,
+        evidence_type: str,
+        severity: str,
+        confidence: int,
+        recommendation: str,
+    ) -> Evidence:
+
+        return Evidence(
+
+            source="logs",
+
+            category="Application",
+
+            type=evidence_type,
+
+            severity=severity,
+
+            confidence=confidence,
+
+            service_name=log.service_name,
+
+            endpoint=getattr(log, "endpoint", None),
+
+            title=evidence_type,
+
+            summary=log.message,
+
+            recommendation=recommendation,
+
+            trace_id=getattr(log, "trace_id", None),
+
+            span_id=getattr(log, "span_id", None),
+
+            timestamp=log.timestamp,
+
+            raw=log.model_dump(),
+
+        )

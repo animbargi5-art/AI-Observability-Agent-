@@ -11,18 +11,11 @@ import "reactflow/dist/style.css";
 import "../../styles/investigation-graph.css";
 
 export default function InvestigationGraph({ investigation }) {
-
-    if (!investigation) {
-
-        return null;
-
-    }
-
-    const graph = investigation.report?.graph || {};
+    const graph = investigation?.report?.graph;
 
     const nodes = useMemo(() => {
 
-        return (graph.nodes || []).map((node) => ({
+        return (graph?.nodes || []).map((node, index) => ({
 
             id: String(node.id),
 
@@ -31,17 +24,17 @@ export default function InvestigationGraph({ investigation }) {
             },
 
             position: {
-                x: Math.random() * 600,
-                y: Math.random() * 500
+                x: 80 + (index % 4) * 180,
+                y: 80 + Math.floor(index / 4) * 140
             }
 
         }));
 
-    }, [graph]);
+    }, [graph?.nodes]);
 
     const edges = useMemo(() => {
 
-        return (graph.edges || []).map((edge, index) => ({
+        return (graph?.edges || []).map((edge, index) => ({
 
             id: `edge-${index}`,
 
@@ -55,7 +48,13 @@ export default function InvestigationGraph({ investigation }) {
 
         }));
 
-    }, [graph]);
+    }, [graph?.edges]);
+
+    if (!investigation) {
+
+        return null;
+
+    }
 
     return (
 

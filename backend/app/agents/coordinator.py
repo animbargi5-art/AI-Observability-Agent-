@@ -1,46 +1,98 @@
-from app.memory.manager import InvestigationMemory
+"""
+===============================================================================
+TattvaAI - Incident Coordinator
+===============================================================================
 
-from app.graph.workflow import graph
+Purpose
+-------
+Entry point for every AI investigation.
+
+Responsibilities
+----------------
+• Create InvestigationState
+• Start the LangGraph workflow
+• Return the completed InvestigationState
+
+This class does NOT:
+--------------------
+❌ Query SigNoz
+❌ Analyze telemetry
+❌ Perform AI reasoning
+❌ Generate reports
+
+Flow
+----
+API
+    ↓
+IncidentCoordinator
+    ↓
+InvestigationState
+    ↓
+LangGraph Workflow
+    ↓
+Completed InvestigationState
+
+===============================================================================
+"""
+
+from __future__ import annotations
+
+from app.schemas.investigation_state import InvestigationState
+from app.graph.graph_builder import graph
 
 
 class IncidentCoordinator:
+    """
+    Starts a complete AI investigation.
+    """
 
-    def __init__(self):
+    def __init__(self) -> None:
+        pass
 
-        self.memory = InvestigationMemory()
+    # -------------------------------------------------------------------------
+    # Start Investigation
+    # -------------------------------------------------------------------------
 
-    def start_investigation(
+    async def start_investigation(
         self,
         incident_id: str,
-        service_name: str
-    ):
+        service_name: str,
+    ) -> InvestigationState:
 
-        investigation = self.memory.create(
-            incident_id,
-            service_name,
+        # -------------------------------------------------------------
+        # Create initial investigation state
+        # -------------------------------------------------------------
+
+        state = InvestigationState(
+
+            incident_id=incident_id,
+
+            service_name=service_name,
+
         )
 
-        result = graph.invoke(
-            {
+        # -------------------------------------------------------------
+        # Execute LangGraph Workflow
+        # -------------------------------------------------------------
 
-                "investigation": investigation,
-
-                "traces": [],
-
-                 "logs": [],
-
-        "metrics": [],
-
-        "dependencies": [],
-
-        "historical_incidents": [],
-
-        "evidence": [],
-
-        "hypotheses": [],
-
-        "recommendations": []
-    }
-)
+        result = await graph.ainvoke(state)
 
         return result
+
+    # -------------------------------------------------------------------------
+    # Alias
+    # -------------------------------------------------------------------------
+
+    def run(
+        self,
+        incident_id: str,
+        service_name: str,
+    ) -> InvestigationState:
+
+        return self.start_investigation(
+
+            incident_id,
+
+            service_name,
+
+        )

@@ -1,40 +1,167 @@
-from enum import Enum
+"""
+===============================================================================
+TattvaAI - MCP Tool Executor
+===============================================================================
+
+This module provides a generic interface for executing tools exposed by any
+Model Context Protocol (MCP) server.
+
+Responsibilities
+----------------
+• Execute MCP tools
+• Validate tool names
+• Retry failed executions
+• Handle errors
+• Record execution statistics
+
+This module is provider-independent.
+
+===============================================================================
+"""
+
+from __future__ import annotations
+
+import asyncio
+from time import perf_counter
+from typing import Any
+
+from app.core.logger import logger
+
+from app.mcp.config import mcp_config
+from app.mcp.exceptions import (
+    MCPConnectionError,
+    MCPToolError,
+    MCPToolTimeoutError,
+)
+from app.mcp.models import MCPToolCall, MCPToolResult
 
 
-class MCPTool(str, Enum):
+class MCPToolExecutor:
+    """
+    Generic MCP tool execution layer.
+    """
 
-    # Metrics
-    LIST_METRICS = "signoz_list_metrics"
-    QUERY_METRICS = "signoz_query_metrics"
-    TOP_METRICS = "signoz_get_top_metrics"
-    METRIC_USAGE = "signoz_check_metric_usage"
-    METRIC_CARDINALITY = "signoz_check_metric_cardinality"
+    def __init__(self, client) -> None:
 
-    # Logs
-    SEARCH_LOGS = "signoz_search_logs"
-    AGGREGATE_LOGS = "signoz_aggregate_logs"
+        self.client = client
 
-    # Traces
-    SEARCH_TRACES = "signoz_search_traces"
-    AGGREGATE_TRACES = "signoz_aggregate_traces"
-    TRACE_DETAILS = "signoz_get_trace_details"
+    # ---------------------------------------------------------------------
+    # Public API
+    # ---------------------------------------------------------------------
 
-    # Services
-    LIST_SERVICES = "signoz_list_services"
-    TOP_OPERATIONS = "signoz_get_service_top_operations"
+    async def execute(
+        self,
+        tool_name: str,
+        arguments: dict[str, Any] | None = None,
+    ) -> MCPToolResult:
+        """
+        Execute one MCP tool.
+        """
 
-    # Alerts
-    LIST_ALERTS = "signoz_list_alerts"
-    LIST_ALERT_RULES = "signoz_list_alert_rules"
-    GET_ALERT = "signoz_get_alert"
+        arguments = arguments or {}
 
-    # Dashboards
-    LIST_DASHBOARDS = "signoz_list_dashboards"
-    GET_DASHBOARD = "signoz_get_dashboard"
+        request = MCPToolCall(
+            tool_name=tool_name,
+            arguments=arguments,
+        )
 
-    # Query Builder
-    EXECUTE_QUERY = "signoz_execute_builder_query"
+        return await self._execute_with_retry(request)
 
-    # Documentation
-    SEARCH_DOCS = "signoz_search_docs"
-    FETCH_DOC = "signoz_fetch_doc"
+    # ---------------------------------------------------------------------
+    # Retry Logic
+    # ---------------------------------------------------------------------
+
+    async def _execute_with_retry(
+        self,
+        request: MCPToolCall,
+    ) -> MCPToolResult:
+
+        last_error: Exception | None = None
+
+        for attempt in range(
+            1,
+            mcp_config.MAX_RETRIES + 1,
+        ):
+
+            try:
+
+                return await self._execute_once(request)
+
+            except MCPToolTimeoutError as exc:
+
+                last_error = exc
+
+                logger.warning(
+                    f"Timeout executing '{request.tool_name}' "
+                    f"(attempt {attempt}/{mcp_config.MAX_RETRIES})"
+                )
+
+            except MCPConnectionError as exc:
+
+                last_error = exc
+
+                logger.warning(
+                    f"Connection failed while executing "
+                    f"'{request.tool_name}' "
+                    f"(attempt {attempt}/{mcp_config.MAX_RETRIES})"
+                )
+
+            except MCPToolError:
+
+                raise
+
+            await asyncio.sleep(
+                mcp_config.RETRY_BACKOFF_SECONDS
+            )
+
+        raise MCPToolError(
+            tool_name=request.tool_name,
+            message="Maximum retry attempts exceeded.",
+            details={
+                "last_error": str(last_error)
+            },
+        )
+
+    # ---------------------------------------------------------------------
+    # Single Execution
+    # ---------------------------------------------------------------------
+
+    async def _execute_once(
+        self,
+        request: MCPToolCall,
+    ) -> MCPToolResult:
+
+        logger.info(
+            f"Executing MCP tool: {request.tool_name}"
+        )
+
+        started = perf_counter()
+
+        #
+        # NOTE
+        #
+        # MCPClient.call_tool(...)
+        #
+        # will be implemented in client.py
+        #
+
+        response = await self.client.call_tool(
+            request.tool_name,
+            request.arguments,
+        )
+
+        elapsed = (
+            perf_counter() - started
+        ) * 1000
+
+        return MCPToolResult(
+
+            success=True,
+
+            tool_name=request.tool_name,
+
+            structured_content=response,
+
+            execution_time_ms=elapsed,
+
+        )

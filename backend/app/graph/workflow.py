@@ -1,48 +1,173 @@
-from langgraph.graph import StateGraph
-from langgraph.graph import START
-from langgraph.graph import END
+"""
+===============================================================================
+TattvaAI - LangGraph Workflow
+===============================================================================
 
-from app.graph.state import GraphState
+Purpose
+-------
+Defines the investigation workflow executed by LangGraph.
+
+This module is responsible ONLY for defining:
+
+• Workflow nodes
+• Workflow edges
+
+It does NOT:
+
+❌ Execute investigations
+❌ Perform AI reasoning
+❌ Query SigNoz
+
+Flow
+----
+START
+    ↓
+Trace
+    ↓
+Logs
+    ↓
+Metrics
+    ↓
+Dependency
+    ↓
+Historical
+    ↓
+Alert
+    ↓
+Investigation
+    ↓
+Report
+    ↓
+END
+
+===============================================================================
+"""
+
+from __future__ import annotations
+
+from langgraph.graph import END
+from langgraph.graph import START
+from langgraph.graph import StateGraph
+
+from app.graph.state import InvestigationState
 
 from app.graph.nodes import (
-    trace_agent,
-    logs_agent,
-    metrics_agent,
-    dependency_agent,
-    decision_engine,
-    recommendation_agent,
+    trace_node,
+    logs_node,
+    metrics_node,
+    dependency_node,
+    historical_node,
+    alert_node,
+    investigation_node,
+    report_node,
 )
 
-workflow = StateGraph(GraphState)
 
-workflow.add_node("trace", trace_agent)
+def build_workflow() -> StateGraph:
+    """
+    Build the LangGraph workflow.
 
-workflow.add_node("logs", logs_agent)
+    Returns
+    -------
+    StateGraph
+        Configured investigation workflow.
+    """
 
-workflow.add_node("metrics", metrics_agent)
+    workflow = StateGraph(
+        InvestigationState
+    )
 
-workflow.add_node("dependency", dependency_agent)
+    # ------------------------------------------------------------------
+    # Nodes
+    # ------------------------------------------------------------------
 
-workflow.add_node("decision", decision_engine)
+    workflow.add_node(
+        "trace",
+        trace_node,
+    )
 
-workflow.add_node("recommendation", recommendation_agent)
+    workflow.add_node(
+        "logs",
+        logs_node,
+    )
 
-workflow.add_edge(START, "trace")
+    workflow.add_node(
+        "metrics",
+        metrics_node,
+    )
 
-workflow.add_edge(START, "logs")
+    workflow.add_node(
+        "dependency",
+        dependency_node,
+    )
 
-workflow.add_edge(START, "metrics")
+    workflow.add_node(
+        "historical",
+        historical_node,
+    )
 
-workflow.add_edge("trace", "dependency")
+    workflow.add_node(
+        "alert",
+        alert_node,
+    )
 
-workflow.add_edge("logs", "dependency")
+    workflow.add_node(
+        "investigation",
+        investigation_node,
+    )
 
-workflow.add_edge("metrics", "dependency")
+    workflow.add_node(
+        "report",
+        report_node,
+    )
 
-workflow.add_edge("dependency", "decision")
+    # ------------------------------------------------------------------
+    # Workflow
+    # ------------------------------------------------------------------
 
-workflow.add_edge("decision", "recommendation")
+    workflow.add_edge(
+        START,
+        "trace",
+    )
 
-workflow.add_edge("recommendation", END)
+    workflow.add_edge(
+        "trace",
+        "logs",
+    )
 
-graph = workflow.compile()
+    workflow.add_edge(
+        "logs",
+        "metrics",
+    )
+
+    workflow.add_edge(
+        "metrics",
+        "dependency",
+    )
+
+    workflow.add_edge(
+        "dependency",
+        "historical",
+    )
+
+    workflow.add_edge(
+        "historical",
+        "alert",
+    )
+
+    workflow.add_edge(
+        "alert",
+        "investigation",
+    )
+
+    workflow.add_edge(
+        "investigation",
+        "report",
+    )
+
+    workflow.add_edge(
+        "report",
+        END,
+    )
+
+    return workflow

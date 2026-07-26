@@ -90,7 +90,7 @@ export default function EvidencePanel({
 
                                     {" "}
 
-                                    {item.message}
+                                    {item.summary}
 
                                 </p>
 
@@ -100,7 +100,7 @@ export default function EvidencePanel({
 
                                     {" "}
 
-                                    {item.root_service || "Unknown"}
+                                    {item.service_name || "Unknown"}
 
                                 </p>
 

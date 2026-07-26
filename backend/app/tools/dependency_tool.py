@@ -1,24 +1,100 @@
-from app.services.shared_signoz import signoz
+"""
+===============================================================================
+TattvaAI - Dependency Tool
+===============================================================================
+
+Purpose
+-------
+Provides normalized service dependency data for AI investigation agents.
+
+Responsibilities
+----------------
+• Retrieve normalized service dependencies
+• Hide TelemetryService implementation
+• Return Dependency domain models
+
+This tool NEVER:
+----------------
+❌ Parses JSON
+❌ Knows about MCP
+❌ Knows about SigNoz response format
+❌ Performs AI reasoning
+
+Architecture
+------------
+DependencyAgent
+        ↓
+DependencyTool
+        ↓
+Application Telemetry Service
+        ↓
+SigNoz Telemetry Service
+        ↓
+MCP Gateway
+        ↓
+SigNoz
+
+===============================================================================
+"""
+
+from __future__ import annotations
+
+from app.core.logger import logger
+
+from app.models.dependency import Dependency
+
+from app.services.telemetry_service import TelemetryService
+
+from app.tools.base_tool import BaseTool
 
 
-class DependencyTool:
+class DependencyTool(BaseTool):
     """
-    Retrieves service dependency information from SigNoz.
-
-    Currently returns an empty dependency list until
-    SigNoz exposes an MCP dependency endpoint.
+    Tool responsible for retrieving normalized service dependencies.
     """
 
-    def __init__(self):
-        self.signoz = signoz
+    def __init__(self) -> None:
 
-    async def execute(self):
+        super().__init__(
+            name="Dependency Tool",
+            description="Retrieves service dependency topology from SigNoz.",
+        )
 
-        # ----------------------------------------------------
-        # Future:
-        # return await self.signoz.list_dependencies()
-        # ----------------------------------------------------
+        self.telemetry = TelemetryService()
 
-        return {
-            "dependencies": []
-        }
+    # -------------------------------------------------------------------------
+    # Public API
+    # -------------------------------------------------------------------------
+
+    async def execute(
+        self,
+        service_name: str,
+        **kwargs,
+    ) -> list[Dependency]:
+        """
+        Retrieve normalized service dependencies.
+        """
+
+        logger.info(
+            "DependencyTool: Retrieving dependencies for '%s'",
+            service_name,
+        )
+
+        dependencies = await self.telemetry.get_dependencies(
+            service_name=service_name,
+            **kwargs,
+        )
+
+        logger.info(
+            "DependencyTool: Retrieved %d dependencies.",
+            len(dependencies),
+        )
+
+        return dependencies
+
+    async def health_check(self) -> bool:
+        """
+        Verify telemetry connectivity.
+        """
+
+        return await self.telemetry.health_check()

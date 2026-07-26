@@ -1,84 +1,161 @@
-import json
+"""
+===============================================================================
+TattvaAI - Alert Agent
+===============================================================================
 
-from mcp.types import TextContent
+Purpose
+-------
+Analyzes active monitoring alerts and generates investigation evidence.
+
+Responsibilities
+----------------
+• Retrieve active alerts
+• Detect critical alerts
+• Detect warning alerts
+• Generate Evidence objects
+• Update InvestigationState
+
+Flow
+----
+InvestigationState
+        ↓
+AlertTool
+        ↓
+List[Alert]
+        ↓
+Evidence
+        ↓
+InvestigationState
+
+===============================================================================
+"""
+
+from __future__ import annotations
 
 from app.agents.base_agent import BaseAgent
+from app.models.evidence import Evidence
+from app.schemas.investigation_state import InvestigationState
 from app.tools.alert_tool import AlertTool
-from app.memory.investigation_memory import InvestigationMemory
 
 
 class AlertAgent(BaseAgent):
+    """
+    AI agent responsible for alert investigation.
+    """
 
-    def __init__(self, memory=None):
+    def __init__(self):
 
         super().__init__(
-            "Alert Agent",
-            "Analyzes active alerts from SigNoz."
+            name="Alert Agent",
+            description="Analyzes monitoring alerts."
         )
 
         self.alert_tool = AlertTool()
 
-        if memory is None:
-            self.memory = InvestigationMemory()
-        else:
-            self.memory = memory
+    async def execute(
+        self,
+        state: InvestigationState,
+    ) -> InvestigationState:
 
-    async def fetch_alerts(self):
+        self.log(
+            f"Investigating alerts for {state.service_name}"
+        )
 
-        return await self.alert_tool.execute()
+        alerts = await self.alert_tool.execute()
 
-    async def execute(self):
+        state.alerts = alerts
 
-        result = await self.fetch_alerts()
-
-        payload = {}
-
-        for item in result.content:
-
-            if isinstance(item, TextContent):
-
-                try:
-                    payload = json.loads(item.text)
-                    break
-
-                except Exception:
-                    pass
-
-        # Temporary debugging
-        print("\n========== ALERT PAYLOAD ==========")
-        print(payload)
-        print("===================================\n")
-
-        # Stop here until we know the JSON structure
-        return {
-            "status": "STOP",
-            "payload": payload
-        }
-
-    def analyze(self, alerts):
-
-        findings = []
+        highest_confidence = state.confidence
 
         for alert in alerts:
 
-            findings.append({
-                "name": alert.get("name"),
-                "severity": alert.get("severity"),
-                "status": alert.get("status"),
-                "service": alert.get("service")
-            })
+            evidence = self.analyze_alert(alert)
 
-        for finding in findings:
-            self.memory.add_evidence(finding)
+            if evidence is None:
+                continue
 
-        self.memory.add_timeline_event(
-            "Alert investigation completed."
+            self.add_evidence(
+                state,
+                evidence,
+            )
+
+            highest_confidence = max(
+                highest_confidence,
+                evidence.confidence,
+            )
+
+        self.set_confidence(
+            state,
+            highest_confidence,
         )
 
-        if findings:
-            self.memory.set_confidence(85)
+        self.add_timeline(
+            state,
+            f"Alert Agent analyzed {len(alerts)} alerts."
+        )
 
-        return {
-            "total_alerts": len(findings),
-            "findings": findings
-        }
+        return state
+
+    # ---------------------------------------------------------------------
+    # Alert Analysis
+    # ---------------------------------------------------------------------
+
+    def analyze_alert(
+        self,
+        alert,
+    ) -> Evidence | None:
+
+        status = (alert.status or "").upper()
+        severity = (alert.severity or "").upper()
+
+        if status != "FIRING":
+            return None
+
+        confidence = 80
+
+        if severity == "CRITICAL":
+
+            confidence = 98
+
+        elif severity == "HIGH":
+
+            confidence = 90
+
+        elif severity == "MEDIUM":
+
+            confidence = 80
+
+        else:
+
+            confidence = 70
+
+        return Evidence(
+
+            source="alerts",
+
+            category="Monitoring",
+
+            type="Active Alert",
+
+            severity=severity,
+
+            confidence=confidence,
+
+            service_name=alert.service_name,
+
+            title=alert.name,
+
+            summary=alert.description,
+
+            recommendation=(
+                "Review the triggering condition and correlate "
+                "this alert with traces, logs and metrics."
+            ),
+
+            alert_id=alert.alert_id,
+
+            timestamp=alert.timestamp,
+
+            raw=alert.model_dump(),
+
+        )

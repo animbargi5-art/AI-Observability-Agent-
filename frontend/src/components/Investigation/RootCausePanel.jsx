@@ -6,7 +6,7 @@ export default function RootCausePanel({ investigation }) {
         return null;
     }
 
-    const rootCause = investigation.report?.root_cause;
+    const rootCause = investigation.report?.root_causes?.[0];
 
     if (!rootCause) {
         return (
@@ -27,7 +27,7 @@ export default function RootCausePanel({ investigation }) {
 
                 <div className="root-cause-item">
                     <span>Service</span>
-                    <strong>{rootCause.service}</strong>
+                    <strong>{rootCause.service_name}</strong>
                 </div>
 
                 <div className="root-cause-item">
@@ -37,7 +37,7 @@ export default function RootCausePanel({ investigation }) {
 
                 <div className="root-cause-item full">
                     <span>Most Probable Cause</span>
-                    <strong>{rootCause.cause}</strong>
+                    <strong>{rootCause.probable_cause}</strong>
                 </div>
 
             </div>

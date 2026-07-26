@@ -5,21 +5,11 @@ router = APIRouter(
     tags=["SigNoz"],
 )
 
-from app.services.signoz import SigNozService
+from app.signoz.telemetry_service import TelemetryService
 
-service = SigNozService()
+service = TelemetryService()
 
 @router.get("/metrics")
 async def list_metrics():
 
-    await service.connect()
-
-    try:
-
-        result = await service.list_metrics()
-
-        return result
-
-    finally:
-
-        await service.disconnect()
+    return await service.list_metrics()

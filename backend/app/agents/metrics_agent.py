@@ -1,171 +1,346 @@
-import json
+"""
+===============================================================================
+TattvaAI - Metrics Agent
+===============================================================================
 
-from mcp.types import TextContent
+Purpose
+-------
+Analyzes application metrics and converts them into investigation evidence.
+
+Responsibilities
+----------------
+• Retrieve normalized metrics
+• Analyze metric anomalies
+• Generate Evidence objects
+• Update InvestigationState
+
+Flow
+----
+InvestigationState
+        ↓
+MetricsTool
+        ↓
+Metric
+        ↓
+Evidence
+        ↓
+InvestigationState
+
+===============================================================================
+"""
+
+from __future__ import annotations
 
 from app.agents.base_agent import BaseAgent
-from app.tools.metrics_tool import MetricsTool
-from app.memory.investigation_memory import InvestigationMemory
 
-HIGH_TRAFFIC_THRESHOLD = 30
-MEDIUM_TRAFFIC_THRESHOLD = 15
+from app.models.metric import Metric
+from app.models.evidence import Evidence
+
+from app.schemas.investigation_state import InvestigationState
+
+from app.tools.metrics_tool import MetricsTool
 
 
 class MetricsAgent(BaseAgent):
     """
-    Responsible for collecting and analyzing metrics.
+    AI agent responsible for metric analysis.
     """
 
-    def __init__(self, memory=None):
+    CPU_THRESHOLD = 85
+
+    MEMORY_THRESHOLD = 85
+
+    LATENCY_THRESHOLD = 1000
+
+    ERROR_RATE_THRESHOLD = 5
+
+    REQUEST_RATE_THRESHOLD = 30
+
+    def __init__(self):
 
         super().__init__(
+
             name="Metrics Agent",
-            description="Analyzes application metrics from SigNoz."
+
+            description="Analyzes application metrics.",
+
         )
 
         self.metrics_tool = MetricsTool()
 
-        if memory is None:
-            self.memory = InvestigationMemory()
-        else:
-            self.memory = memory
+    # ------------------------------------------------------------------
+    # Execute
+    # ------------------------------------------------------------------
 
-    async def fetch_metrics(self):
+    async def execute(
+        self,
+        state: InvestigationState,
+    ) -> InvestigationState:
 
-        return await self.metrics_tool.execute()
+        #
+        # Retrieve metrics
+        #
 
-    async def execute(self):
+        metrics = await self.metrics_tool.execute(
 
-        metrics = await self.fetch_metrics()
+            service_name=state.service_name,
 
-        payload = {}
+            metric_name="*",
 
-        for item in metrics.content:
-
-            if isinstance(item, TextContent):
-
-                try:
-                    payload = json.loads(item.text)
-                    break
-
-                except Exception:
-                    pass
-
-        if payload.get("status") == "error":
-
-            return {
-                "total_metrics": 0,
-                "findings": [],
-                "error": payload.get("message", "Unknown Error")
-            }
-
-        return self.analyze(payload)
-
-    def analyze(self, metrics):
-
-        findings = []
-
-        results = (
-            metrics
-                .get("data", {})
-                .get("data", {})
-                .get("results", [])
         )
 
-        if not results:
-            return {
-                "total_metrics": 0,
-                "findings": []
-            }
+        state.metrics = metrics
 
-        aggregations = results[0].get("aggregations", [])
+        highest_confidence = state.confidence
 
-        if not aggregations:
-            return {
-                "total_metrics": 0,
-                "findings": []
-            }
+        #
+        # Analyze metrics
+        #
 
-        series = aggregations[0].get("series", [])
+        for metric in metrics:
 
-        if not series:
-            return {
-                "total_metrics": 0,
-                "findings": []
-            }
+            evidence = self.analyze_metric(metric)
 
-        values = series[0].get("values", [])
+            if evidence is None:
 
-        for point in values:
+                continue
 
-            value = point.get("value", 0)
+            self.add_evidence(
 
-            timestamp = point.get("timestamp")
+                state,
 
-            if value >= HIGH_TRAFFIC_THRESHOLD:
+                evidence,
 
-                findings.append({
-
-                    "severity": "HIGH",
-
-                    "type": "High Traffic",
-
-                    "confidence": 90,
-
-                    "message": f"HTTP request rate reached {value}",
-
-                    "category": "Infrastructure",
-
-                    "root_service": "tattva-ai-backend",
-
-                    "metric": {
-                        "name": "HTTP Request Rate",
-                        "value": value,
-                        "timestamp": timestamp
-                    }
-
-                })
-
-            elif value >= MEDIUM_TRAFFIC_THRESHOLD:
-
-                findings.append({
-
-                    "severity": "MEDIUM",
-
-                    "type": "Traffic Spike",
-
-                    "confidence": 75,
-
-                    "message": f"HTTP request rate increased to {value}",
-
-                    "category": "Infrastructure",
-
-                    "root_service": "tattva-ai-backend",
-
-                    "metric": {
-                        "name": "HTTP Request Rate",
-                        "value": value,
-                        "timestamp": timestamp
-                    }
-
-                })
-
-        for finding in findings:
-            self.memory.add_evidence(finding)
-
-        self.memory.add_timeline_event(
-            "Metrics investigation completed."
-        )
-
-        if findings:
-
-            highest_confidence = max(
-                finding["confidence"]
-                for finding in findings
             )
 
-            self.memory.set_confidence(highest_confidence)
+            highest_confidence = max(
 
-        return {
-            "total_metrics": len(findings),
-            "findings": findings
-        }
+                highest_confidence,
+
+                evidence.confidence,
+
+            )
+
+        self.set_confidence(
+
+            state,
+
+            highest_confidence,
+
+        )
+
+        self.add_timeline(
+
+            state,
+
+            f"Metrics Agent analyzed {len(metrics)} metric(s).",
+
+        )
+
+        return state
+
+    # ------------------------------------------------------------------
+    # Metric Analysis
+    # ------------------------------------------------------------------
+
+    def analyze_metric(
+
+        self,
+
+        metric: Metric,
+
+    ) -> Evidence | None:
+
+        #
+        # CPU
+        #
+
+        if metric.is_cpu and metric.exceeds(
+
+            self.CPU_THRESHOLD
+
+        ):
+
+            return self.create_evidence(
+
+                metric,
+
+                "High CPU Usage",
+
+                "Infrastructure",
+
+                "HIGH",
+
+                90,
+
+                f"CPU usage reached {metric.value}{metric.unit or ''}.",
+
+                "Investigate CPU intensive workloads.",
+
+            )
+
+        #
+        # Memory
+        #
+
+        if metric.is_memory and metric.exceeds(
+
+            self.MEMORY_THRESHOLD
+
+        ):
+
+            return self.create_evidence(
+
+                metric,
+
+                "High Memory Usage",
+
+                "Infrastructure",
+
+                "HIGH",
+
+                90,
+
+                f"Memory usage reached {metric.value}{metric.unit or ''}.",
+
+                "Inspect memory leaks and garbage collection.",
+
+            )
+
+        #
+        # Latency
+        #
+
+        if metric.is_latency and metric.exceeds(
+
+            self.LATENCY_THRESHOLD
+
+        ):
+
+            return self.create_evidence(
+
+                metric,
+
+                "High Latency",
+
+                "Performance",
+
+                "HIGH",
+
+                95,
+
+                f"Latency increased to {metric.value}{metric.unit or ' ms'}.",
+
+                "Inspect slow queries and external dependencies.",
+
+            )
+
+        #
+        # Error Rate
+        #
+
+        if metric.is_error_rate and metric.exceeds(
+
+            self.ERROR_RATE_THRESHOLD
+
+        ):
+
+            return self.create_evidence(
+
+                metric,
+
+                "High Error Rate",
+
+                "Application",
+
+                "CRITICAL",
+
+                98,
+
+                f"Error rate reached {metric.value}{metric.unit or '%'}.",
+
+                "Review application logs and recent deployments.",
+
+            )
+
+        #
+        # Request Rate
+        #
+
+        if metric.is_request_rate and metric.exceeds(
+
+            self.REQUEST_RATE_THRESHOLD
+
+        ):
+
+            return self.create_evidence(
+
+                metric,
+
+                "High Traffic",
+
+                "Infrastructure",
+
+                "MEDIUM",
+
+                80,
+
+                f"Request rate reached {metric.value}{metric.unit or ''}.",
+
+                "Verify autoscaling and backend capacity.",
+
+            )
+
+        return None
+
+    # ------------------------------------------------------------------
+    # Evidence Builder
+    # ------------------------------------------------------------------
+
+    def create_evidence(
+
+        self,
+
+        metric: Metric,
+
+        evidence_type: str,
+
+        category: str,
+
+        severity: str,
+
+        confidence: int,
+
+        summary: str,
+
+        recommendation: str,
+
+    ) -> Evidence:
+
+        return Evidence(
+
+            source="metrics",
+
+            category=category,
+
+            type=evidence_type,
+
+            severity=severity,
+
+            confidence=confidence,
+
+            service_name=metric.service_name,
+
+            title=evidence_type,
+
+            summary=summary,
+
+            recommendation=recommendation,
+
+            metric_name=metric.metric_name,
+
+            timestamp=metric.timestamp,
+
+            raw=metric.model_dump(),
+
+        )

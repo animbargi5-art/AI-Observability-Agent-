@@ -1,151 +1,201 @@
+"""
+===============================================================================
+TattvaAI - Report Agent
+===============================================================================
+
+Purpose
+-------
+Generates the final AI investigation report.
+
+Responsibilities
+----------------
+• Collect investigation results
+• Build InvestigationReport model
+• Generate executive summary
+• Store final report inside InvestigationState
+
+Flow
+----
+InvestigationState
+        ↓
+ReportAgent
+        ↓
+InvestigationReport
+
+===============================================================================
+"""
+
+from __future__ import annotations
+
+from datetime import datetime
+
 from app.agents.base_agent import BaseAgent
-from app.decision.reasoning_engine import ReasoningEngine
+
+from app.models.investigation_report import InvestigationReport
+
+from app.schemas.investigation_state import InvestigationState
 
 
 class ReportAgent(BaseAgent):
+    """
+    Generates the final AI investigation report.
+    """
 
-    def __init__(self, memory):
+    def __init__(self):
 
         super().__init__(
+
             name="Report Agent",
-            description="Generates the final investigation report."
+
+            description="Generates the final AI investigation report."
+
         )
 
-        self.memory = memory
-        self.reasoning_engine = ReasoningEngine(memory)
+    async def execute(
+        self,
+        state: InvestigationState,
+    ) -> InvestigationState:
 
-    async def execute(self):
+        report = InvestigationReport(
 
-        reasoning = self.reasoning_engine.analyze()
+            investigation_id=state.incident_id,
 
-        executive_summary = {
+            incident_id=state.incident_id,
 
-            "incident_title": self.memory.incident.get(
+            service_name=state.service_name,
+
+            title=state.incident.get(
                 "title",
                 "Unknown Incident"
             ),
 
-            "severity": self.memory.incident.get(
-                "severity",
-                "UNKNOWN"
-            ),
-
-            "confidence": self.memory.confidence,
-
-            "highest_severity": reasoning.get(
-                "highest_severity"
-            ),
-
-            "status": self.memory.incident.get(
+            status=state.incident.get(
                 "status",
                 "UNKNOWN"
-            )
-
-        }
-
-        graph = self.memory.graph
-        evidence = self.memory.evidence
-        recommendations = self.memory.recommendations
-        correlations = self.memory.correlations
-        timeline = self.memory.timeline
-
-        statistics = {
-
-            "evidence_count": len(evidence),
-
-            "recommendation_count": len(recommendations),
-
-            "correlation_count": len(correlations),
-
-            "timeline_events": len(timeline)
-
-        }
-
-        report = {
-
-            "executive_summary": executive_summary,
-
-            "statistics": statistics,
-
-            "incident": self.memory.incident,
-
-            "timeline": timeline,
-
-            "evidence": evidence,
-
-            "correlations": correlations,
-
-            "graph": {
-
-                "nodes": graph.get("nodes", []),
-
-                "edges": graph.get("edges", [])
-
-            },
-
-            "reasoning": reasoning,
-
-            "root_cause": (
-                self.memory.hypotheses[0]
-                if self.memory.hypotheses
-                else None
             ),
 
-            "recommendations": recommendations,
+            severity=self.highest_severity(state),
 
-            "confidence": self.memory.confidence,
+            confidence=state.confidence,
 
-            "summary": self.generate_summary(reasoning)
+            evidence=state.evidence,
+
+            correlations=state.correlations,
+
+            root_causes=state.root_causes,
+
+            recommendations=state.recommendations,
+
+            timeline=state.timeline,
+
+            executive_summary=self.generate_summary(state),
+
+            technical_summary=state.reasoning.get(
+                "summary", "No additional technical summary is available."
+            ),
+
+            reasoning=state.reasoning,
+
+            graph=state.reasoning.get("graph", {}),
+
+            evidence_count=len(state.evidence),
+
+            correlation_count=len(state.correlations),
+
+            root_cause_count=len(state.root_causes),
+
+            recommendation_count=len(state.recommendations),
+
+            generated_at=datetime.utcnow(),
+
+            generated_by="TattvaAI"
+
+        )
+
+        state.final_report = report
+
+        self.add_timeline(
+
+            state,
+
+            "Report Agent generated final investigation report."
+
+        )
+
+        return state
+
+    # ------------------------------------------------------------------
+    # Highest Severity
+    # ------------------------------------------------------------------
+
+    def highest_severity(
+        self,
+        state: InvestigationState,
+    ) -> str:
+
+        priority = {
+
+            "CRITICAL": 4,
+
+            "HIGH": 3,
+
+            "MEDIUM": 2,
+
+            "LOW": 1,
 
         }
 
-        self.memory.set_final_report(report)
+        highest = "LOW"
 
-        self.memory.add_timeline_event(
-            "Final investigation report generated."
-        )
+        for root in state.root_causes:
 
-        return report
+            if priority.get(root.severity, 0) > priority.get(highest, 0):
 
-    def generate_summary(self, reasoning):
+                highest = root.severity
 
-        incident = self.memory.incident
+        return highest
 
-        if incident.get("status") == "NO_ISSUE":
+    # ------------------------------------------------------------------
+    # Executive Summary
+    # ------------------------------------------------------------------
 
-            return (
-                "No active incident was detected during the investigation."
-            )
+    def generate_summary(
+        self,
+        state: InvestigationState,
+    ) -> str:
 
-        severity = incident.get(
-            "severity",
-            "UNKNOWN"
-        )
+        services = sorted({
 
-        title = incident.get(
-            "title",
-            "Unknown Incident"
-        )
+            correlation.service_name
 
-        services = reasoning.get("services", {})
+            for correlation in state.correlations
 
-        service_list = ", ".join(services.keys())
+        })
 
-        if not service_list:
-            service_list = "Unknown"
+        if services:
+
+            affected = ", ".join(services)
+
+        else:
+
+            affected = "None"
 
         return (
 
-            f"Investigation completed for '{title}'. "
+            f"Investigation completed for "
 
-            f"Severity: {severity}. "
+            f"'{state.service_name}'. "
 
-            f"Affected Services: {service_list}. "
+            f"{len(state.evidence)} evidence item(s), "
 
-            f"Evidence collected: {len(self.memory.evidence)}. "
+            f"{len(state.correlations)} correlation(s), "
 
-            f"Recommendations generated: {len(self.memory.recommendations)}. "
+            f"{len(state.root_causes)} root cause(s), "
 
-            f"Confidence Score: {self.memory.confidence}%."
+            f"{len(state.recommendations)} recommendation(s). "
+
+            f"Affected services: {affected}. "
+
+            f"Confidence Score: {state.confidence}%."
 
         )

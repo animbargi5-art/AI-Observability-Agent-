@@ -1,69 +1,124 @@
-from app.database.session import SessionLocal
+"""
+===============================================================================
+TattvaAI - Investigation Repository
+===============================================================================
+
+Purpose
+-------
+Handles all database operations related to investigations.
+
+Responsibilities
+----------------
+• Save investigation reports
+• Retrieve investigations
+• Delete investigations
+
+This repository is the ONLY layer that communicates directly with the
+database.
+
+Architecture
+------------
+InvestigationService
+        ↓
+InvestigationRepository
+        ↓
+SQLAlchemy
+        ↓
+Database
+
+===============================================================================
+"""
+
+from __future__ import annotations
+
+from sqlalchemy.exc import SQLAlchemyError
+
 from app.database.models import Investigation
+from app.database.session import SessionLocal
+
+from app.models.investigation_report import InvestigationReport
 
 
 class InvestigationRepository:
     """
-    Handles all database operations for investigations.
+    Repository responsible for investigation persistence.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
 
         self.db = SessionLocal()
 
-    def save_investigation(self, report):
+    # -------------------------------------------------------------------------
+    # Save Investigation
+    # -------------------------------------------------------------------------
 
-        incident = report.get("incident", {})
+    def save_investigation(
+        self,
+        report: InvestigationReport,
+    ) -> Investigation:
 
-        investigation = Investigation(
+        try:
 
-            incident_id=incident.get(
-                "id",
-                "UNKNOWN"
-            ),
+            investigation = Investigation(
 
-            title=incident.get(
-                "title",
-                "Unknown Incident"
-            ),
+                incident_id=report.incident_id,
 
-            severity=incident.get(
-                "severity",
-                "LOW"
-            ),
+                title=report.title,
 
-            status=incident.get(
-                "status",
-                "UNKNOWN"
-            ),
+                severity=report.severity,
 
-            confidence=report.get(
-                "confidence",
-                0
-            ),
+                status=report.status,
 
-            report=report
+                confidence=report.confidence,
 
-        )
+                # Store the complete report as JSON
+                report=report.model_dump(mode="json"),
 
-        self.db.add(investigation)
+            )
 
-        self.db.commit()
+            self.db.add(investigation)
 
-        self.db.refresh(investigation)
+            self.db.commit()
 
-        return investigation.id
+            self.db.refresh(investigation)
 
-    def get_all_investigations(self):
+            return investigation
+
+        except SQLAlchemyError:
+
+            self.db.rollback()
+
+            raise
+
+    # -------------------------------------------------------------------------
+    # Get All
+    # -------------------------------------------------------------------------
+
+    def get_all_investigations(
+        self,
+    ) -> list[Investigation]:
+
         return (
+
             self.db
+
             .query(Investigation)
+
             .all()
+
         )
 
-    def get_investigation_by_id(self, investigation_id):
-        
+    # -------------------------------------------------------------------------
+    # Get By ID
+    # -------------------------------------------------------------------------
+
+    def get_investigation_by_id(
+        self,
+        investigation_id: int,
+    ) -> Investigation | None:
+
         return (
+
             self.db
 
             .query(Investigation)
@@ -73,9 +128,17 @@ class InvestigationRepository:
             )
 
             .first()
+
         )
 
-    def delete_investigation(self, investigation_id):
+    # -------------------------------------------------------------------------
+    # Delete
+    # -------------------------------------------------------------------------
+
+    def delete_investigation(
+        self,
+        investigation_id: int,
+    ) -> bool:
 
         investigation = (
 
@@ -100,3 +163,11 @@ class InvestigationRepository:
         self.db.commit()
 
         return True
+
+    # -------------------------------------------------------------------------
+    # Close Session
+    # -------------------------------------------------------------------------
+
+    def close(self) -> None:
+
+        self.db.close()

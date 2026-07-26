@@ -1,264 +1,165 @@
-from collections import Counter
+"""
+===============================================================================
+TattvaAI - Reasoning Engine
+===============================================================================
 
-from app.memory.investigation_memory import InvestigationMemory
+Purpose
+-------
+Summarizes the investigation results produced by the AI reasoning pipeline.
+
+Responsibilities
+----------------
+• Analyze correlated evidence
+• Summarize root causes
+• Summarize recommendations
+• Produce investigation statistics
+
+Flow
+----
+Correlation
+        ↓
+RootCause
+        ↓
+Recommendation
+        ↓
+Reasoning Summary
+===============================================================================
+"""
+
+from __future__ import annotations
+
+from app.schemas.investigation_state import InvestigationState
 
 
 class ReasoningEngine:
     """
-    Performs reasoning over the investigation graph
-    and all collected investigation evidence.
+    Produces a high-level reasoning summary from the investigation state.
     """
 
-    def __init__(self, memory: InvestigationMemory):
-
-        self.memory = memory
-
-    def analyze(self):
-
-        graph = self.memory.graph
-
-        evidence = self.memory.evidence
-
-        correlations = self.memory.correlations
-
-        nodes = graph.get("nodes", [])
-
-        edges = graph.get("edges", [])
-
-        severity_order = {
-            "NONE": 0,
-            "LOW": 1,
-            "MEDIUM": 2,
-            "HIGH": 3,
-            "CRITICAL": 4,
-            "ERROR": 4
-        }
-
-        service_counter = Counter()
-
-        finding_counter = Counter()
-
-        category_counter = Counter()
-
-        highest_severity = "NONE"
-
-        suspicious_services = []
-
-        service_lookup = {}
-
-        endpoint_lookup = {}
-
-        incident_lookup = {}
-
-        # -------------------------------------
-        # Analyze collected evidence
-        # -------------------------------------
-
-        for finding in evidence:
-
-            finding_counter[
-                finding.get("type", "Unknown")
-            ] += 1
-
-            category_counter[
-                finding.get("category", "General")
-            ] += 1
-
-            severity = finding.get("severity", "LOW")
-
-            if severity_order.get(severity, 0) > severity_order.get(highest_severity, 0):
-
-                highest_severity = severity
-
-        # -------------------------------------
-        # Build graph lookup tables
-        # -------------------------------------
-
-        for node in nodes:
-
-            node_type = node.get("type")
-
-            if node_type == "SERVICE":
-
-                service_lookup[node["id"]] = node["label"]
-
-                service_counter[node["label"]] += 1
-
-            elif node_type == "ENDPOINT":
-
-                endpoint_lookup[node["id"]] = node
-
-            elif node_type == "INCIDENT":
-
-                incident_lookup[node["id"]] = node
-
-        # -------------------------------------
-        # Analyze graph relationships
-        # -------------------------------------
-
-        for edge in edges:
-
-            if edge.get("relation") != "TRIGGERED":
-                continue
-
-            endpoint = endpoint_lookup.get(edge["source"])
-
-            incident = incident_lookup.get(edge["target"])
-
-            if endpoint is None or incident is None:
-                continue
-
-            service = "Unknown"
-
-            for relation in edges:
-
-                if (
-                    relation.get("relation") == "HAS_ENDPOINT"
-                    and relation.get("target") == endpoint["id"]
-                ):
-
-                    service = service_lookup.get(
-                        relation["source"],
-                        "Unknown"
-                    )
-
-                    break
-
-            severity = incident.get("severity", "LOW")
-
-            if severity_order.get(severity, 0) > severity_order.get(highest_severity, 0):
-
-                highest_severity = severity
-
-            if severity in ["HIGH", "CRITICAL"]:
-
-                suspicious_services.append(
-                    {
-                        "service": service,
-                        "severity": severity,
-                        "endpoint": endpoint.get("label"),
-                        "incident": incident.get("label"),
-                    }
-                )
-
-        # -------------------------------------
-        # Build reasoning summary
-        # -------------------------------------
-
-        reasoning = []
-
-        if not nodes:
-
-            reasoning.append(
-                "No evidence graph available."
-            )
-
-        else:
-
-            reasoning.append(
-                f"Analyzed {len(nodes)} graph nodes."
-            )
-
-            reasoning.append(
-                f"Detected {len(edges)} graph relationships."
-            )
-
-            reasoning.append(
-                f"Detected {len(service_counter)} services."
-            )
-
-        reasoning.append(
-            f"Collected {len(evidence)} evidence items."
-        )
-
-        reasoning.append(
-            f"Generated {len(correlations)} correlations."
-        )
-
-        reasoning.append(
-            f"Detected {len(finding_counter)} incident types."
-        )
-
-        reasoning.append(
-            f"Highest severity observed: {highest_severity}."
-        )
-
-        if suspicious_services:
-
-            reasoning.append(
-                f"{len(suspicious_services)} high-priority incidents detected."
-            )
-
-        # -------------------------------------
-        # AI Investigation Conclusions
-        # -------------------------------------
-
-        conclusions = []
-
-        if highest_severity == "CRITICAL":
-            conclusions.append(
-                "Critical incidents require immediate attention."
-            )
-
-        if finding_counter.get("Application Error", 0) > 0:
-            conclusions.append(
-                "Application exceptions were detected in the backend."
-            )
-
-        if (
-            finding_counter.get("Critical Slow API", 0) > 0
-            or finding_counter.get("Slow API", 0) > 0
-        ):
-            conclusions.append(
-                "Slow API responses indicate possible blocking operations or overloaded services."
-            )
-
-        if finding_counter.get("Traffic Spike", 0) > 0:
-            conclusions.append(
-                "Traffic spikes may be contributing to degraded performance."
-            )
-
-        if suspicious_services:
-
-            affected = {
-                service["service"]
-                for service in suspicious_services
+    def execute(
+        self,
+        state: InvestigationState,
+    ) -> dict:
+
+        services = sorted(
+            {
+                correlation.service_name
+                for correlation in state.correlations
             }
+        )
 
-            conclusions.append(
-                "Primary affected service(s): "
-                + ", ".join(sorted(affected))
-            )
+        highest_severity = self.highest_severity(state)
 
-        if not conclusions:
-            conclusions.append(
-                "No significant incidents detected."
-            )
+        highest_confidence = self.highest_confidence(state)
 
         return {
 
-            "graph_nodes": len(nodes),
-
-            "graph_edges": len(edges),
-
-            "services": dict(service_counter),
+            "services": services,
 
             "highest_severity": highest_severity,
 
-            "suspicious_services": suspicious_services,
+            "confidence": highest_confidence,
 
-            "reasoning": reasoning,
-            
-            "conclusions": conclusions,
+            "evidence_count": len(state.evidence),
 
-            "evidence_count": len(evidence),
+            "correlation_count": len(state.correlations),
 
-            "finding_types": dict(finding_counter),
+            "root_cause_count": len(state.root_causes),
 
-            "categories": dict(category_counter),
+            "recommendation_count": len(state.recommendations),
 
-            "correlation_count": len(correlations),
+            "timeline_events": len(state.timeline),
 
-            "status": "READY"
+            "summary": self.build_summary(
+                state,
+                services,
+                highest_severity,
+            ),
+        }
+
+    # -------------------------------------------------------------------------
+    # Highest Severity
+    # -------------------------------------------------------------------------
+
+    def highest_severity(
+        self,
+        state: InvestigationState,
+    ) -> str:
+
+        priority = {
+
+            "CRITICAL": 4,
+
+            "HIGH": 3,
+
+            "MEDIUM": 2,
+
+            "LOW": 1,
 
         }
+
+        highest = "LOW"
+
+        for root in state.root_causes:
+
+            if priority.get(root.severity, 0) > priority.get(highest, 0):
+
+                highest = root.severity
+
+        return highest
+
+    # -------------------------------------------------------------------------
+    # Highest Confidence
+    # -------------------------------------------------------------------------
+
+    def highest_confidence(
+        self,
+        state: InvestigationState,
+    ) -> int:
+
+        if not state.root_causes:
+
+            return 0
+
+        return max(
+
+            root.confidence
+
+            for root in state.root_causes
+
+        )
+
+    # -------------------------------------------------------------------------
+    # Summary Builder
+    # -------------------------------------------------------------------------
+
+    def build_summary(
+        self,
+        state: InvestigationState,
+        services: list[str],
+        severity: str,
+    ) -> str:
+
+        service_text = ", ".join(services)
+
+        if not service_text:
+
+            service_text = "None"
+
+        return (
+
+            f"Investigation completed. "
+
+            f"{len(state.evidence)} evidence item(s), "
+
+            f"{len(state.correlations)} correlation(s), "
+
+            f"{len(state.root_causes)} root cause(s), "
+
+            f"{len(state.recommendations)} recommendation(s). "
+
+            f"Highest severity: {severity}. "
+
+            f"Affected services: {service_text}."
+
+        )

@@ -34,8 +34,6 @@ export default function InvestigationProgress({ running }) {
 
         if (!running) {
 
-            setVisibleSteps([]);
-
             return;
 
         }

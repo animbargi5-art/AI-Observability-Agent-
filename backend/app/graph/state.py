@@ -1,29 +1,43 @@
-from typing import TypedDict
+"""
+===============================================================================
+TattvaAI - Graph State
+===============================================================================
 
-from app.schemas.investigation import InvestigationState
+Purpose
+-------
+Provides the shared state used throughout the LangGraph workflow.
 
+The graph layer does NOT define its own state model.
 
-class GraphState(TypedDict):
-    """
-    Shared LangGraph state.
+Instead, it reuses the canonical InvestigationState defined under
+app.schemas.investigation_state.
 
-    Every agent writes only to its own section.
-    """
+This ensures every agent, engine, and graph node operates on the same
+state object.
 
-    investigation: InvestigationState
+Architecture
+------------
+FastAPI
+    ↓
+IncidentCoordinator
+    ↓
+LangGraph
+    ↓
+InvestigationState
+    ↓
+Agents
+    ↓
+Decision Engines
+    ↓
+Report Agent
 
-    traces: list
+===============================================================================
+"""
 
-    logs: list
+from __future__ import annotations
 
-    metrics: list
+from app.schemas.investigation_state import InvestigationState
 
-    dependencies: list
-
-    historical_incidents: list
-
-    evidence: list
-
-    hypotheses: list
-
-    recommendations: list
+__all__ = [
+    "InvestigationState",
+]
