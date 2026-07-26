@@ -1,17 +1,2 @@
-.search-bar {
-
-    width: 100%;
-
-    padding: 12px 16px;
-
-    border: 1px solid #d1d5db;
-
-    border-radius: 10px;
-
-    margin-bottom: 24px;
-
-    font-size: 15px;
-
-    box-sizing: border-box;
-
-}
+/* Search Bar CSS */
+.search-bar { margin-bottom: 1rem; }

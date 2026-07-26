@@ -1,0 +1,85 @@
+/* Sort Filter Styles */
+
+.sort-filter-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sort-filter-label {
+  font-weight: 500;
+  color: var(--text-color);
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.sort-filter-select {
+  min-width: 150px;
+}
+
+.sort-direction-toggle {
+  padding: 0.5rem;
+  border: 1px solid var(--surface-border);
+  border-radius: 6px;
+  background: var(--surface-card);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.sort-direction-toggle:hover {
+  background: var(--surface-hover);
+  border-color: var(--primary-color);
+}
+
+.sort-direction-toggle.active {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.sort-icon {
+  font-size: 1rem;
+  transition: transform 0.2s;
+}
+
+.sort-icon.desc {
+  transform: rotate(180deg);
+}
+
+.sort-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sort-option {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  font-size: 0.875rem;
+}
+
+.sort-option:hover {
+  background: var(--surface-hover);
+}
+
+.sort-option.active {
+  background: var(--primary-color);
+  color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .sort-filter-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .sort-filter-select {
+    min-width: auto;
+  }
+}

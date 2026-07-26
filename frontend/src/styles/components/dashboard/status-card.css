@@ -1,27 +1,213 @@
-.status-card{
+/* Status Card Component */
 
-    background:white;
-
-    border-radius:15px;
-
-    padding:25px;
-
-    margin-bottom:25px;
-
-    box-shadow:0 8px 20px rgba(0,0,0,.08);
-
+.status-card {
+    background: linear-gradient(135deg, var(--surface-0) 0%, var(--surface-50) 100%);
+    border: 1px solid var(--surface-border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    position: relative;
+    overflow: hidden;
 }
 
-.status-card h2{
-
-    margin-bottom:15px;
-
+.status-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--primary-color);
 }
 
-.status-card p{
+.status-card.online::before {
+    background: var(--green-500);
+}
 
-    margin:10px 0;
+.status-card.offline::before {
+    background: var(--red-500);
+}
 
-    font-size:18px;
+.status-card.warning::before {
+    background: var(--orange-500);
+}
 
+.status-card.maintenance::before {
+    background: var(--blue-500);
+}
+
+.status-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.status-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    position: relative;
+}
+
+.status-dot.online {
+    background: var(--green-500);
+}
+
+.status-dot.offline {
+    background: var(--red-500);
+}
+
+.status-dot.warning {
+    background: var(--orange-500);
+}
+
+.status-dot.maintenance {
+    background: var(--blue-500);
+}
+
+.status-dot.online::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--green-200);
+    border-radius: 50%;
+    animation: pulse-ring 2s infinite;
+}
+
+@keyframes pulse-ring {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}
+
+.status-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.status-label.online {
+    color: var(--green-700);
+}
+
+.status-label.offline {
+    color: var(--red-700);
+}
+
+.status-label.warning {
+    color: var(--orange-700);
+}
+
+.status-label.maintenance {
+    color: var(--blue-700);
+}
+
+.status-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.status-metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.875rem;
+}
+
+.status-metric-label {
+    color: var(--text-color-secondary);
+}
+
+.status-metric-value {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.status-uptime {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--surface-200);
+}
+
+.uptime-label {
+    font-size: 0.75rem;
+    color: var(--text-color-secondary);
+}
+
+.uptime-value {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.status-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.status-action-btn {
+    flex: 1;
+    font-size: 0.75rem;
+    padding: 0.5rem;
+}
+
+/* Loading state */
+.status-card.loading {
+    pointer-events: none;
+}
+
+.status-card.loading .status-dot {
+    animation: loading-pulse 1.5s infinite;
+}
+
+@keyframes loading-pulse {
+    0%, 100% {
+        opacity: 0.4;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .status-card {
+        padding: 1rem;
+    }
+    
+    .status-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .status-actions {
+        flex-direction: column;
+    }
 }

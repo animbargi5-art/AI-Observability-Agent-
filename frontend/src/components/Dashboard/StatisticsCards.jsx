@@ -1,24 +1,26 @@
 export default function StatisticsCards({ investigations }) {
+    // Handle case where investigations might be undefined or null
+    const safeInvestigations = investigations || [];
 
-    const total = investigations.length;
+    const total = safeInvestigations.length;
 
-    const critical = investigations.filter(
+    const critical = safeInvestigations.filter(
         item => item.severity === "CRITICAL"
     ).length;
 
-    const high = investigations.filter(
+    const high = safeInvestigations.filter(
         item => item.severity === "HIGH"
     ).length;
 
-    const medium = investigations.filter(
+    const medium = safeInvestigations.filter(
         item => item.severity === "MEDIUM"
     ).length;
 
-    const low = investigations.filter(
+    const low = safeInvestigations.filter(
         item => item.severity === "LOW"
     ).length;
 
-    const noIssue = investigations.filter(
+    const noIssue = safeInvestigations.filter(
         item => item.severity === "NONE"
     ).length;
 
@@ -26,13 +28,13 @@ export default function StatisticsCards({ investigations }) {
         total === 0
             ? 0
             : Math.round(
-                investigations.reduce(
-                    (sum, item) => sum + item.confidence,
+                safeInvestigations.reduce(
+                    (sum, item) => sum + (item.confidence || 0),
                     0
                 ) / total
             );
 
-    const investigating = investigations.filter(
+    const investigating = safeInvestigations.filter(
         item => item.status === "INVESTIGATING"
     ).length;
 

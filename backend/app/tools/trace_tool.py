@@ -94,7 +94,7 @@ class TraceTool(BaseTool):
             service_name,
         )
 
-        return await self.telemetry.aggregate_traces(
+        return await self.telemetry.signoz.aggregate_traces(
             service_name=service_name,
             **kwargs,
         )
@@ -116,7 +116,7 @@ class TraceTool(BaseTool):
             trace_id,
         )
 
-        return await self.telemetry.get_trace_details(
+        return await self.telemetry.signoz.get_trace_details(
             trace_id=trace_id,
         )
 
@@ -129,4 +129,4 @@ class TraceTool(BaseTool):
         Verify telemetry connectivity.
         """
 
-        return await self.telemetry.health_check()
+        return await self.telemetry.signoz.health_check()

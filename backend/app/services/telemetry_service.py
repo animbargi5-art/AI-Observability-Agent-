@@ -46,6 +46,7 @@ from app.models.log import Log
 from app.models.metric import Metric
 from app.models.dependency import Dependency
 from app.models.alert import Alert
+from app.models.historical_incident import HistoricalIncident
 
 from app.signoz.telemetry_service import (
     TelemetryService as SigNozTelemetryService,
@@ -126,6 +127,11 @@ class TelemetryService:
         service_name: str,
         **kwargs,
     ) -> list[Trace]:
+
+        # Demo mode: return mock traces
+        from app.core.settings import settings
+        if settings.DEMO_MODE:
+            return self._generate_mock_traces(service_name)
 
         raw = await self.signoz.search_traces(
             service_name,
@@ -229,6 +235,11 @@ class TelemetryService:
         **kwargs,
     ) -> list[Log]:
 
+        # Demo mode: return mock logs
+        from app.core.settings import settings
+        if settings.DEMO_MODE:
+            return self._generate_mock_logs(service_name)
+
         raw = await self.signoz.search_logs(
             service_name,
             **kwargs,
@@ -313,6 +324,11 @@ class TelemetryService:
         **kwargs,
     ) -> list[Metric]:
 
+        # Demo mode: return mock metrics
+        from app.core.settings import settings
+        if settings.DEMO_MODE:
+            return self._generate_mock_metrics(service_name, metric_name)
+
         raw = await self.signoz.query_metrics(
             service_name,
             metric_name,
@@ -389,6 +405,11 @@ class TelemetryService:
         **kwargs,
     ) -> list[Dependency]:
 
+        # Demo mode: return mock dependencies
+        from app.core.settings import settings
+        if settings.DEMO_MODE:
+            return self._generate_mock_dependencies(service_name)
+
         raw = await self.signoz.get_dependencies(
             service_name,
             **kwargs,
@@ -448,6 +469,11 @@ class TelemetryService:
 
     async def get_alerts(self) -> list[Alert]:
 
+        # Demo mode: return mock alerts
+        from app.core.settings import settings
+        if settings.DEMO_MODE:
+            return self._generate_mock_alerts("gateway")
+
         raw = await self.signoz.gateway.list_alerts()
 
         payload = self._extract_payload(raw)
@@ -506,11 +532,149 @@ class TelemetryService:
     async def get_historical_incidents(
         self,
         service_name: str,
-    ):
+        **kwargs,
+    ) -> list[HistoricalIncident]:
         """
         Retrieve historical incidents for the specified service.
+        Convert from SigNoz telemetry data into HistoricalIncident models.
         """
-
-        return await self.signoz.get_historical_incidents(
+        logger.info("Getting historical incidents for service: %s", service_name)
+        
+        # Use the new method that returns proper HistoricalIncident models
+        incidents = await self.signoz.get_historical_incidents_as_models(
             service_name=service_name,
+            **kwargs,
         )
+        
+        logger.info("Retrieved %d historical incidents", len(incidents))
+        return incidents
+
+    async def health_check(self) -> bool:
+        """
+        Check telemetry service health.
+        """
+        return await self.signoz.health_check()
+    # =====================================================================
+    # Demo Mode Mock Data Generation
+    # =====================================================================
+
+    def _generate_mock_traces(self, service_name: str) -> list[Trace]:
+        """Generate mock trace data for demo mode."""
+        from datetime import datetime, timedelta
+        
+        traces = []
+        for i in range(5):
+            trace = Trace(
+                trace_id=f"trace_{service_name}_{i}",
+                span_id=f"span_{service_name}_{i}",
+                operation_name=f"/{service_name}/api/endpoint",
+                service_name=service_name,
+                duration_ms=100 + (i * 50),
+                timestamp=datetime.now() - timedelta(minutes=i * 5),
+                status_code=500 if i == 2 else 200,  # Use integer status codes
+                status="ERROR" if i == 2 else "OK",
+                error_message="Database connection timeout" if i == 2 else None,
+                attributes={"http.method": "GET", "http.url": f"/{service_name}/api"}
+            )
+            traces.append(trace)
+        return traces
+
+    def _generate_mock_logs(self, service_name: str) -> list[Log]:
+        """Generate mock log data for demo mode."""
+        from datetime import datetime, timedelta
+        
+        logs = []
+        for i in range(5):
+            log = Log(
+                timestamp=datetime.now() - timedelta(minutes=i * 5),
+                severity="ERROR" if i == 2 else "INFO",
+                message=f"Connection timeout to database" if i == 2 else f"Processing request {i}",
+                service_name=service_name,
+                trace_id=f"trace_{service_name}_{i}",
+                span_id=f"span_{service_name}_{i}",
+                attributes={"component": service_name},
+                exception_message="Connection refused" if i == 2 else None
+            )
+            logs.append(log)
+        return logs
+
+    def _generate_mock_metrics(self, service_name: str, metric_name: str = "response_time") -> list[Metric]:
+        """Generate mock metric data for demo mode."""
+        from datetime import datetime, timedelta
+        
+        metrics = []
+        for i in range(5):
+            metric = Metric(
+                metric_name=metric_name,
+                value=50.0 + (i * 10) if metric_name == "response_time" else 0.95 - (i * 0.1),
+                timestamp=datetime.now() - timedelta(minutes=i * 5),
+                service_name=service_name,
+                labels={"endpoint": "/api/health"},
+                unit="ms" if metric_name == "response_time" else "percent"
+            )
+            metrics.append(metric)
+        return metrics
+
+    def _generate_mock_dependencies(self, service_name: str) -> list[Dependency]:
+        """Generate mock dependency data for demo mode."""
+        dependencies = []
+        if service_name == "gateway":
+            deps_data = [
+                {"target": "inventory", "call_rate": 150.0, "error_rate": 0.02},
+                {"target": "order", "call_rate": 100.0, "error_rate": 0.01},
+                {"target": "payment", "call_rate": 80.0, "error_rate": 0.05}
+            ]
+        else:
+            deps_data = [{"target": "database", "call_rate": 200.0, "error_rate": 0.01}]
+            
+        for dep_data in deps_data:
+            dependency = Dependency(
+                source_service=service_name,
+                target_service=dep_data["target"],
+                operation="HTTP",
+                call_rate=dep_data["call_rate"],
+                error_rate=dep_data["error_rate"],
+                p99_latency=100.0,
+                dependency_type="HTTP"
+            )
+            dependencies.append(dependency)
+        return dependencies
+
+    def _generate_mock_alerts(self, service_name: str) -> list[Alert]:
+        """Generate mock alert data for demo mode."""
+        from datetime import datetime, timedelta
+        
+        alerts = []
+        alert = Alert(
+            id=f"alert_{service_name}_1",
+            name="High Error Rate",
+            severity="HIGH",
+            status="FIRING",
+            service_name=service_name,
+            description=f"Error rate above threshold for {service_name}",
+            created_at=datetime.now() - timedelta(minutes=30),
+            updated_at=datetime.now() - timedelta(minutes=5),
+            labels={"alertname": "HighErrorRate", "service": service_name}
+        )
+        alerts.append(alert)
+        return alerts
+
+    def _generate_mock_historical_incidents(self, service_name: str) -> list[HistoricalIncident]:
+        """Generate mock historical incident data for demo mode."""
+        from datetime import datetime, timedelta
+        
+        incidents = []
+        incident = HistoricalIncident(
+            id=f"incident_{service_name}_1",
+            service_name=service_name,
+            incident_type="PERFORMANCE",
+            description=f"Database connection timeout in {service_name}",
+            root_cause="Database connection pool exhaustion",
+            resolution="Increased connection pool size and added connection retry logic",
+            occurred_at=datetime.now() - timedelta(days=7),
+            resolved_at=datetime.now() - timedelta(days=7, hours=-2),
+            severity="HIGH",
+            affected_components=[service_name, "database"]
+        )
+        incidents.append(incident)
+        return incidents

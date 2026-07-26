@@ -143,8 +143,11 @@ class MCPGateway:
                 arguments,
             )
 
-            return result
-            
+            logger.info("RAW MCP RESULT:")
+            logger.info(result) 
+
+            return self._extract_payload(result)
+
         except Exception as ex:
 
             logger.exception(
@@ -153,6 +156,27 @@ class MCPGateway:
             )
 
             raise ex
+
+    def _extract_payload(self, result):
+        """
+        Convert an MCP CallToolResult into normal Python data.
+        """
+
+        if result is None:
+            return None
+
+        if not hasattr(result, "content"):
+            return result
+
+        if not result.content:
+            return None
+
+        text = result.content[0].text
+
+        try:
+            return json.loads(text)
+        except Exception:
+            return text
 
     # -------------------------------------------------------------------------
     # Tool Wrappers

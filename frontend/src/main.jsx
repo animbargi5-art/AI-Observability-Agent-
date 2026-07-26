@@ -11,6 +11,7 @@ import "./styles/index.css";
 import "./api/interceptors.js";
 
 import App from "./App.jsx";
+import { primeReactConfig } from "./config/primeReactConfig.js";
 
 // Create QueryClient instance for TanStack Query
 const queryClient = new QueryClient({
@@ -28,29 +29,10 @@ const queryClient = new QueryClient({
     },
 });
 
-// PrimeReact configuration
-const primeConfig = {
-    ripple: true,
-    inputStyle: 'outlined',
-    locale: 'en',
-    appendTo: 'self',
-    autoZIndex: true,
-    hideOverlaysOnDocumentScrolling: false,
-    nonce: undefined,
-    nullSortOrder: 1,
-    zIndex: {
-        modal: 1100,
-        overlay: 1000,
-        menu: 1000,
-        tooltip: 1100,
-        toast: 1200
-    }
-};
-
 createRoot(document.getElementById("root")).render(
     <StrictMode>
         <QueryClientProvider client={queryClient}>
-            <PrimeReactProvider value={primeConfig}>
+            <PrimeReactProvider value={primeReactConfig}>
                 <BrowserRouter>
                     <App />
                 </BrowserRouter>

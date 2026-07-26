@@ -1,0 +1,84 @@
+/* Investigation Graph Styles */
+
+.investigation-graph-container {
+  height: 400px;
+  width: 100%;
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  background: var(--surface-card);
+}
+
+.react-flow__node-default {
+  background: white;
+  border: 2px solid var(--primary-color);
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.react-flow__node-alert {
+  background: #ffebee;
+  border: 2px solid var(--red-500);
+}
+
+.react-flow__node-metric {
+  background: #e3f2fd;
+  border: 2px solid var(--blue-500);
+}
+
+.react-flow__node-log {
+  background: #f3e5f5;
+  border: 2px solid var(--purple-500);
+}
+
+.react-flow__node-trace {
+  background: #e8f5e8;
+  border: 2px solid var(--green-500);
+}
+
+.react-flow__edge-default {
+  stroke: var(--primary-color);
+  stroke-width: 2;
+}
+
+.react-flow__controls {
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+}
+
+.react-flow__minimap {
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+}
+
+.graph-legend {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.graph-legend h4 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-color);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}

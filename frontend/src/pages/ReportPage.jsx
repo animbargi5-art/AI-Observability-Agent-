@@ -14,8 +14,8 @@ import SeverityChart from "../components/Reports/SeverityChart";
 import StatusChart from "../components/Reports/StatusChart";
 import TrendChart from "../components/Reports/TrendChart";
 import ReportStatCard from "../components/Reports/ReportStatCard";
-import { reportService } from "../services/reportService";
-import "../styles/pages.css";
+import reportService from "../services/reportService";
+import "../styles/pages/reports.css";
 
 const ReportsPage = () => {
     const [dateRange, setDateRange] = useState([null, null]);

@@ -1,34 +1,55 @@
-version: "3.9"
-
 services:
-
+  # TattvaAI Backend
   backend:
     build:
       context: ./backend
+      dockerfile: Dockerfile
     container_name: tattvaai-backend
-
     ports:
       - "8000:8000"
-
+    environment:
+      - PYTHONPATH=/app
+      - LOG_LEVEL=debug
+      - SIGNOZ_API_URL=http://signoz-query-service:8080
+      - SIGNOZ_MCP_URL=http://signoz-mcp:8000/mcp
     volumes:
       - ./backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - tattvaai-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
-
+  # TattvaAI Frontend  
   frontend:
     build:
       context: ./frontend
-
+      dockerfile: Dockerfile
     container_name: tattvaai-frontend
-
     ports:
-      - "5173:5173"
-
+      - "3001:5173"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8000
+      - NODE_ENV=development
     volumes:
       - ./frontend:/app
       - /app/node_modules
-
+    command: npm run dev -- --host 0.0.0.0 --port 5173
     depends_on:
       - backend
+    networks:
+      - tattvaai-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5173 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
-    command: npm run dev -- --host
+networks:
+  tattvaai-network:
+    driver: bridge

@@ -1,71 +1,125 @@
+/* Investigation Action Panel Component */
+
 .action-panel {
-
     background: white;
-
-    margin-top: 30px;
-
-    padding: 24px;
-
-    border-radius: 16px;
-
-    box-shadow: 0 4px 12px rgba(0,0,0,.08);
-
+    border: 1px solid var(--surface-border);
+    border-radius: 8px;
+    padding: 1.5rem;
 }
 
-.action-panel h2 {
+.action-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
 
-    margin-bottom: 20px;
+.action-panel-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0;
+}
 
+.action-panel-status {
+    font-size: 0.875rem;
+    color: var(--text-color-secondary);
 }
 
 .action-buttons {
-
     display: flex;
-
-    gap: 16px;
-
+    flex-direction: column;
+    gap: 1rem;
 }
 
-.action-buttons button {
-
-    border: none;
-
-    padding: 12px 22px;
-
-    border-radius: 10px;
-
+.action-button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    border: 1px solid var(--surface-border);
+    border-radius: 6px;
+    background: var(--surface-50);
     cursor: pointer;
+    transition: all 0.2s ease;
+}
 
-    font-size: 15px;
+.action-button:hover {
+    background: var(--surface-100);
+    border-color: var(--primary-color);
+}
 
+.action-button.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.action-info {
+    flex: 1;
+}
+
+.action-title {
+    font-size: 0.875rem;
     font-weight: 600;
-
+    color: var(--text-color);
+    margin-bottom: 0.25rem;
 }
 
-.refresh-btn {
-
-    background: #2563eb;
-
-    color: white;
-
+.action-description {
+    font-size: 0.75rem;
+    color: var(--text-color-secondary);
+    line-height: 1.4;
 }
 
-.refresh-btn:hover {
-
-    background: #1d4ed8;
-
+.action-icon {
+    font-size: 1.25rem;
+    color: var(--primary-color);
 }
 
-.delete-btn {
-
-    background: #dc2626;
-
-    color: white;
-
+.action-controls {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--surface-border);
 }
 
-.delete-btn:hover {
+.control-group {
+    margin-bottom: 1rem;
+}
 
-    background: #b91c1c;
+.control-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+    display: block;
+}
 
+.control-help {
+    font-size: 0.75rem;
+    color: var(--text-color-secondary);
+    margin-top: 0.25rem;
+}
+
+.investigation-controls {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .action-panel {
+        padding: 1rem;
+    }
+    
+    .action-button {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .investigation-controls {
+        flex-direction: column;
+    }
 }

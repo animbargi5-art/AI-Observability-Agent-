@@ -1,0 +1,80 @@
+/* Severity Filter Styles */
+
+.severity-filter-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.severity-filter-label {
+  font-weight: 500;
+  color: var(--text-color);
+  font-size: 0.875rem;
+}
+
+.severity-filter-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.severity-option {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--surface-border);
+  border-radius: 6px;
+  background: var(--surface-card);
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.severity-option:hover {
+  border-color: var(--primary-color);
+}
+
+.severity-option.active {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.severity-option.critical {
+  color: var(--red-600);
+  border-color: var(--red-200);
+}
+
+.severity-option.critical.active {
+  background: var(--red-500);
+  border-color: var(--red-500);
+}
+
+.severity-option.high {
+  color: var(--orange-600);
+  border-color: var(--orange-200);
+}
+
+.severity-option.high.active {
+  background: var(--orange-500);
+  border-color: var(--orange-500);
+}
+
+.severity-option.medium {
+  color: var(--yellow-600);
+  border-color: var(--yellow-200);
+}
+
+.severity-option.medium.active {
+  background: var(--yellow-500);
+  border-color: var(--yellow-500);
+}
+
+.severity-option.low {
+  color: var(--green-600);
+  border-color: var(--green-200);
+}
+
+.severity-option.low.active {
+  background: var(--green-500);
+  border-color: var(--green-500);
+}

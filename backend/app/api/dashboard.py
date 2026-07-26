@@ -1,0 +1,138 @@
+"""
+Dashboard API endpoints for TattvaAI frontend.
+Provides dashboard statistics, recent investigations, and system status.
+"""
+
+from datetime import datetime, timedelta
+from typing import List
+
+from fastapi import APIRouter, Query
+
+from app.core.settings import settings
+
+router = APIRouter(
+    prefix="/dashboard",
+    tags=["Dashboard"]
+)
+
+
+@router.get("/recent")
+async def get_recent_investigations(limit: int = Query(default=10, ge=1, le=50)):
+    """Get recent investigations for dashboard."""
+    
+    # In demo mode, return mock recent investigations
+    if settings.DEMO_MODE:
+        investigations = []
+        
+        for i in range(min(limit, 5)):
+            investigation = {
+                "id": f"inv_{i+1}",
+                "service_name": "gateway" if i % 2 == 0 else "payment",
+                "status": "COMPLETED" if i < 3 else "IN_PROGRESS",
+                "severity": "HIGH" if i == 0 else "MEDIUM",
+                "created_at": (datetime.now() - timedelta(hours=i * 2)).isoformat(),
+                "updated_at": (datetime.now() - timedelta(hours=i * 2 - 1)).isoformat(),
+                "root_cause": "Database connection timeout" if i == 0 else None,
+                "confidence": 0.95 if i == 0 else 0.8,
+                "affected_services": ["gateway", "database"] if i == 0 else ["payment"]
+            }
+            investigations.append(investigation)
+        
+        return {
+            "investigations": investigations,
+            "total": len(investigations)
+        }
+    
+    # TODO: When not in demo mode, get real investigations from database
+    return {"investigations": [], "total": 0}
+
+
+@router.get("/statistics")
+async def get_dashboard_statistics():
+    """Get dashboard statistics."""
+    
+    # In demo mode, return mock statistics
+    if settings.DEMO_MODE:
+        return {
+            "total_investigations": 47,
+            "active_investigations": 3,
+            "resolved_today": 8,
+            "average_resolution_time": "2.3h",
+            "success_rate": 94.5,
+            "services_monitored": 12,
+            "alerts_last_24h": 15,
+            "critical_incidents": 2
+        }
+    
+    # TODO: When not in demo mode, calculate real statistics
+    return {
+        "total_investigations": 0,
+        "active_investigations": 0,
+        "resolved_today": 0,
+        "average_resolution_time": "0h",
+        "success_rate": 0,
+        "services_monitored": 0,
+        "alerts_last_24h": 0,
+        "critical_incidents": 0
+    }
+
+
+@router.get("/signoz-status")
+async def get_signoz_status():
+    """Get SigNoz connection status."""
+    
+    # In demo mode, return mock status
+    if settings.DEMO_MODE:
+        return {
+            "status": "connected",
+            "version": "0.55.0",
+            "last_check": datetime.now().isoformat(),
+            "services_count": 12,
+            "traces_last_hour": 45678,
+            "logs_last_hour": 123456,
+            "metrics_last_hour": 987654
+        }
+    
+    # TODO: When not in demo mode, check real SigNoz status
+    return {
+        "status": "disconnected",
+        "version": None,
+        "last_check": datetime.now().isoformat(),
+        "services_count": 0,
+        "traces_last_hour": 0,
+        "logs_last_hour": 0,
+        "metrics_last_hour": 0
+    }
+
+
+@router.get("/health-overview")
+async def get_health_overview():
+    """Get overall system health overview."""
+    
+    # In demo mode, return mock health data
+    if settings.DEMO_MODE:
+        services = [
+            {"name": "gateway", "status": "healthy", "response_time": 45, "error_rate": 0.1},
+            {"name": "inventory", "status": "healthy", "response_time": 32, "error_rate": 0.0},
+            {"name": "order", "status": "degraded", "response_time": 156, "error_rate": 2.3},
+            {"name": "payment", "status": "healthy", "response_time": 67, "error_rate": 0.2},
+        ]
+        
+        return {
+            "services": services,
+            "overall_status": "degraded",
+            "healthy_services": 3,
+            "total_services": 4,
+            "average_response_time": 75,
+            "total_error_rate": 0.65
+        }
+    
+    # TODO: When not in demo mode, get real health data
+    return {
+        "services": [],
+        "overall_status": "unknown",
+        "healthy_services": 0,
+        "total_services": 0,
+        "average_response_time": 0,
+        "total_error_rate": 0
+    }

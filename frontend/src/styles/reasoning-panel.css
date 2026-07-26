@@ -1,0 +1,201 @@
+/* Reasoning Panel Styles */
+
+.reasoning-panel {
+  background: var(--surface-card);
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.reasoning-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.reasoning-panel-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.reasoning-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.reasoning-step {
+  position: relative;
+  padding-left: 3rem;
+}
+
+.reasoning-step::before {
+  content: counter(step-counter);
+  counter-increment: step-counter;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 2rem;
+  height: 2rem;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.reasoning-steps {
+  counter-reset: step-counter;
+}
+
+.reasoning-step-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0 0 0.5rem 0;
+}
+
+.reasoning-step-content {
+  color: var(--text-color-secondary);
+  line-height: 1.6;
+  margin-bottom: 0.75rem;
+}
+
+.reasoning-step-evidence {
+  background: var(--surface-ground);
+  padding: 0.75rem;
+  border-radius: 6px;
+  border-left: 4px solid var(--primary-color);
+}
+
+.reasoning-step-evidence h5 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.reasoning-evidence-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.reasoning-evidence-item {
+  padding: 0.25rem 0;
+  font-size: 0.875rem;
+  color: var(--text-color-secondary);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.reasoning-evidence-item::before {
+  content: "•";
+  color: var(--primary-color);
+  font-weight: bold;
+  margin-top: 0.125rem;
+}
+
+.reasoning-confidence {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--surface-ground);
+  border-radius: 6px;
+}
+
+.confidence-label {
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.confidence-bar {
+  flex: 1;
+  height: 8px;
+  background: var(--surface-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.confidence-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--red-500), var(--yellow-500), var(--green-500));
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.confidence-value {
+  font-weight: 600;
+  color: var(--text-color);
+  min-width: 3rem;
+  text-align: right;
+}
+
+.reasoning-timeline {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--surface-border);
+}
+
+.reasoning-timeline-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  font-size: 0.875rem;
+}
+
+.reasoning-timestamp {
+  color: var(--text-color-secondary);
+  font-family: var(--font-family-mono, monospace);
+  min-width: 8rem;
+}
+
+.reasoning-action {
+  color: var(--text-color);
+}
+
+.reasoning-empty {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-color-secondary);
+}
+
+.reasoning-empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .reasoning-panel {
+    padding: 1rem;
+  }
+  
+  .reasoning-step {
+    padding-left: 2.5rem;
+  }
+  
+  .reasoning-step::before {
+    width: 1.5rem;
+    height: 1.5rem;
+    font-size: 0.75rem;
+  }
+  
+  .reasoning-confidence {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

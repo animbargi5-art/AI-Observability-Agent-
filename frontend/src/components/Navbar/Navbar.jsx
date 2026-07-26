@@ -6,7 +6,7 @@ import { Avatar } from "primereact/avatar";
 import { Button } from "primereact/button";
 import { Menu } from "primereact/menu";
 import { Chip } from "primereact/chip";
-import { Breadcrumb } from "primereact/breadcrumb";
+// import { Breadcrumb } from "primereact/breadcrumb"; // Temporarily removed due to import issues
 import { OverlayPanel } from "primereact/overlaypanel";
 import { Divider } from "primereact/divider";
 import dashboardService from "../../services/dashboardService";
@@ -215,13 +215,27 @@ export default function Navbar() {
                     className="main-menubar"
                 />
                 
-                {/* Breadcrumb Navigation */}
+                {/* Breadcrumb Navigation - Temporarily replaced due to PrimeReact import issue */}
                 <div className="breadcrumb-section">
-                    <Breadcrumb 
-                        model={breadcrumbItems} 
-                        home={breadcrumbHome}
-                        className="navbar-breadcrumb"
-                    />
+                    <div className="simple-breadcrumb">
+                        {breadcrumbItems.length > 0 ? (
+                            <>
+                                <i className="pi pi-home"></i>
+                                {breadcrumbItems.map((item, index) => (
+                                    <span key={index}>
+                                        <span className="breadcrumb-separator"> / </span>
+                                        <span className="breadcrumb-item">{item.label}</span>
+                                    </span>
+                                ))}
+                            </>
+                        ) : (
+                            <>
+                                <i className="pi pi-home"></i>
+                                <span className="breadcrumb-separator"> / </span>
+                                <span className="breadcrumb-item">Dashboard</span>
+                            </>
+                        )}
+                    </div>
                 </div>
             </header>
 

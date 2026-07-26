@@ -3,7 +3,7 @@ import { Menu } from "primereact/menu";
 import { Badge } from "primereact/badge";
 import { useState, useEffect } from "react";
 
-import "../styles/sidebar.css";
+import "../../styles/layouts/sidebar.css";
 
 export default function Sidebar() {
     const navigate = useNavigate();

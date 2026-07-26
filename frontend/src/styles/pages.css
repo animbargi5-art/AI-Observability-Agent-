@@ -1,0 +1,243 @@
+/* Common Page Styles */
+
+.page-container {
+  padding: 2rem;
+  min-height: calc(100vh - 120px);
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin: 0;
+}
+
+.page-subtitle {
+  font-size: 1rem;
+  color: var(--text-color-secondary);
+  margin-top: 0.5rem;
+}
+
+.page-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.page-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* History Page Specific Styles */
+.history-page {
+  padding: 2rem;
+}
+
+.history-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: var(--surface-card);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.history-table {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.history-search {
+  flex: 1;
+  min-width: 300px;
+}
+
+.history-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 200px;
+}
+
+.history-filter-label {
+  font-weight: 500;
+  color: var(--text-color);
+  font-size: 0.875rem;
+}
+
+.history-toolbar {
+  padding: 1rem;
+  background: var(--surface-card);
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.history-stats {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 1rem;
+}
+
+.history-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  background: var(--surface-card);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.history-stat-value {
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.history-stat-label {
+  font-size: 0.875rem;
+  color: var(--text-color-secondary);
+}
+
+/* Severity Tags */
+.severity-tag {
+  font-weight: 500;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.severity-critical {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.severity-high {
+  background: #fff3e0;
+  color: #ef6c00;
+}
+
+.severity-medium {
+  background: #fff8e1;
+  color: #f57c00;
+}
+
+.severity-low {
+  background: #e8f5e8;
+  color: #2e7d32;
+}
+
+/* Status Tags */
+.status-tag {
+  font-weight: 500;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.status-active {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.status-resolved {
+  background: #e8f5e8;
+  color: #2e7d32;
+}
+
+.status-escalated {
+  background: #fff3e0;
+  color: #ef6c00;
+}
+
+.status-closed {
+  background: #f5f5f5;
+  color: #757575;
+}
+
+/* Action Buttons */
+.action-button {
+  padding: 0.5rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.action-button:hover {
+  background: var(--surface-hover);
+}
+
+.view-button {
+  color: var(--primary-color);
+}
+
+.edit-button {
+  color: var(--orange-500);
+}
+
+.delete-button {
+  color: var(--red-500);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .history-filters {
+    flex-direction: column;
+  }
+  
+  .history-search {
+    min-width: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-container {
+    padding: 1rem;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .page-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .history-stats {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .history-filter-group {
+    min-width: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 2rem;
+  }
+  
+  .history-filters {
+    padding: 1rem;
+  }
+}

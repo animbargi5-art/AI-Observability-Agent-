@@ -6,7 +6,7 @@ from app.api.health import router as health_router
 from app.api.root import router as root_router
 from app.api.investigation import router as investigation_router
 from app.api.demo import router as demo_router
-
+from app.api.dashboard import router as dashboard_router
 from app.api.signoz import router as signoz_router
 
 from app.telemetry.tracing import setup_tracing
@@ -21,7 +21,10 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        "http://localhost:3001",
         "http://localhost:5173",
+        "http://127.0.0.1:3001",
+        "http://127.0.0.1:5173",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -32,7 +35,7 @@ app.include_router(root_router)
 app.include_router(health_router)
 app.include_router(investigation_router)
 app.include_router(demo_router)
-
+app.include_router(dashboard_router)
 app.include_router(signoz_router)
 
 setup_tracing(app)

@@ -6,3 +6,38 @@ dist/
 build/
 .pours/
 .venv/
+# =============================================================================
+# TattvaAI Specific - Development & Internal Files
+# =============================================================================
+
+# Architecture Documentation (Internal)
+TATTVA*.md
+*.md
+
+# Demo and Testing (Internal Development Only)
+demo/
+test_*.py
+start_tattvaai.py
+RUN_*.md
+
+# Development Tools & Scripts
+casting.yaml*
+pours/
+
+# Temporary Development Files
+payload.json
+*.tmp
+*.temp
+
+# IDE & Editor Files
+.vscode/
+*.sublime-*
+
+# Development Logs & Debug Files
+debug/
+logs/
+*.debug
+
+# Build Artifacts
+build/
+dist/
