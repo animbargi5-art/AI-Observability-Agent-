@@ -21,6 +21,11 @@ async def home():
     }
 
 
+@app.get("/health")
+async def health():
+    return {"status": "healthy", "service": "order"}
+
+
 @app.get("/orders")
 async def get_orders():
 
@@ -42,11 +47,11 @@ async def get_orders():
         for order in orders:
 
             inventory = await client.get(
-                f"http://127.0.0.1:8102/inventory/{order['id']}"
+                f"http://inventory:8000/inventory/{order['id']}"
             )
 
             payment = await client.get(
-                f"http://127.0.0.1:8103/pay/{order['id']}"
+                f"http://payment:8000/pay/{order['id']}"
             )
 
             order["inventory"] = inventory.json()

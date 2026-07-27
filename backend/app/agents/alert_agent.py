@@ -154,7 +154,7 @@ class AlertAgent(BaseAgent):
 
             alert_id=alert.alert_id,
 
-            timestamp=alert.timestamp,
+            timestamp=alert.last_updated or alert.fired_at,
 
             raw=alert.model_dump(),
 

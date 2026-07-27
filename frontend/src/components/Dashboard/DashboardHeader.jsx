@@ -1,4 +1,4 @@
-export default function DashboardHeader() {
+export default function DashboardHeader({ onRefresh, refreshing = false }) {
 
     const now = new Date();
 
@@ -10,15 +10,15 @@ export default function DashboardHeader() {
 
             <div>
 
-                <h1>TattvaAI Dashboard</h1>
+                <h1>Investigation workspace</h1>
 
                 <p>
-                    AI Powered Incident Intelligence Platform
+                    Live SigNoz evidence, clear incident decisions.
                 </p>
 
                 <p className="dashboard-time">
 
-                    Last Updated: {formattedTime}
+                    Updated {formattedTime}
 
                 </p>
 
@@ -26,10 +26,9 @@ export default function DashboardHeader() {
 
             <div className="dashboard-actions">
 
-                <button className="refresh-btn">
-
-                    Refresh Dashboard
-
+                <button className="refresh-btn" onClick={onRefresh} disabled={refreshing}>
+                    <i className={refreshing ? "pi pi-spin pi-spinner" : "pi pi-refresh"} />
+                    {refreshing ? " Refreshing" : " Refresh"}
                 </button>
 
             </div>

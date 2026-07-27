@@ -1,5 +1,4 @@
 services:
-  # TattvaAI Backend
   backend:
     build:
       context: ./backend
@@ -10,13 +9,16 @@ services:
     environment:
       - PYTHONPATH=/app
       - LOG_LEVEL=debug
-      - SIGNOZ_API_URL=http://signoz-query-service:8080
-      - SIGNOZ_MCP_URL=http://signoz-mcp:8000/mcp
+      - DEMO_MODE=false
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://signoz-ingester:4317
+      - SIGNOZ_API_URL=http://signoz-signoz-0:8080
+      - SIGNOZ_MCP_SERVER=http://signoz-mcp:8000/mcp
     volumes:
       - ./backend:/app
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     networks:
       - tattvaai-network
+      - signoz-network
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
       interval: 30s
@@ -24,7 +26,6 @@ services:
       retries: 3
       start_period: 40s
 
-  # TattvaAI Frontend  
   frontend:
     build:
       context: ./frontend
@@ -50,6 +51,68 @@ services:
       retries: 3
       start_period: 40s
 
+  gateway:
+    build:
+      context: ./services
+      dockerfile: Dockerfile
+      args: { SERVICE: gateway }
+    ports: ["8011:8000"]
+    environment: ["OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://signoz-ingester:4318/v1/traces"]
+    networks: [tattvaai-network, signoz-network]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  inventory:
+    build:
+      context: ./services
+      dockerfile: Dockerfile
+      args: { SERVICE: inventory }
+    ports: ["8002:8000"]
+    environment: ["OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://signoz-ingester:4318/v1/traces"]
+    networks: [tattvaai-network, signoz-network]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  payment:
+    build:
+      context: ./services
+      dockerfile: Dockerfile
+      args: { SERVICE: payment }
+    ports: ["8004:8000"]
+    environment: ["OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://signoz-ingester:4318/v1/traces"]
+    networks: [tattvaai-network, signoz-network]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  order:
+    build:
+      context: ./services
+      dockerfile: Dockerfile
+      args: { SERVICE: order }
+    ports: ["8003:8000"]
+    environment: ["OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://signoz-ingester:4318/v1/traces"]
+    depends_on:
+      inventory: { condition: service_healthy }
+      payment: { condition: service_healthy }
+    networks: [tattvaai-network, signoz-network]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 networks:
   tattvaai-network:
     driver: bridge
+  signoz-network:
+    external: true
+    name: signoz-network

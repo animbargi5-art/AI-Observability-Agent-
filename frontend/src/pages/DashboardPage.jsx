@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
-import { ProgressSpinner } from "primereact/progressspinner";
 import { Skeleton } from "primereact/skeleton";
 import { Message } from "primereact/message";
 
@@ -12,12 +12,27 @@ import dashboardService from "../services/dashboardService";
 import DashboardHeader from "../components/Dashboard/DashboardHeader";
 import InvestigationList from "../components/Dashboard/InvestigationList";
 import StatisticsCards from "../components/Dashboard/StatisticsCards";
-import RecentIncidents from "../components/Dashboard/RecentIncident";
 import InvestigationProgress from "../components/Dashboard/InvestigationProgress";
 import InvestigationStatus from "../components/Dashboard/InvestigationStatus";
 
+function DashboardLoading() {
+    return (
+        <div className="grid">
+            <div className="col-12"><Skeleton height="3rem" className="mb-3" /></div>
+            {[...Array(4)].map((_, index) => (
+                <div key={index} className="col-12 md:col-6 lg:col-3"><Skeleton height="7rem" /></div>
+            ))}
+        </div>
+    );
+}
+
+function DashboardError({ error }) {
+    return <Message severity="error" text={`Unable to load dashboard data: ${error.message}`} className="mb-3" />;
+}
+
 export default function DashboardPage() {
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
     const [isInvestigationRunning, setIsInvestigationRunning] = useState(false);
 
     // Fetch dashboard statistics
@@ -39,6 +54,7 @@ export default function DashboardPage() {
     } = useQuery({
         queryKey: ['recent-investigations'],
         queryFn: () => dashboardService.getRecentInvestigations(10),
+        initialData: [],
         refetchInterval: 10000 // Refresh every 10 seconds
     });
 
@@ -65,8 +81,9 @@ export default function DashboardPage() {
             queryClient.invalidateQueries(['dashboard-stats']);
             
             // Navigate to investigation page if ID is returned
-            if (data?.investigation_id) {
-                window.location.href = `/investigation/${data.investigation_id}`;
+            const investigationId = data?.investigation_id ?? data?.incident_id;
+            if (investigationId) {
+                navigate(`/investigation/${investigationId}`);
             }
         },
         onError: (error) => {
@@ -81,43 +98,26 @@ export default function DashboardPage() {
         startInvestigationMutation.mutate();
     };
 
-    // Loading skeleton component
-    const LoadingSkeleton = () => (
-        <div className="grid">
-            <div className="col-12">
-                <Skeleton height="3rem" className="mb-3" />
-            </div>
-            {[...Array(4)].map((_, i) => (
-                <div key={i} className="col-12 md:col-6 lg:col-3">
-                    <Skeleton height="8rem" />
-                </div>
-            ))}
-            <div className="col-12">
-                <Skeleton height="12rem" />
-            </div>
-        </div>
-    );
-
-    // Error component
-    const ErrorMessage = ({ error, onRetry }) => (
-        <Message 
-            severity="error" 
-            text={`Failed to load dashboard data: ${error.message}`}
-            className="mb-3"
-        />
-    );
+    const refreshDashboard = () => {
+        queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+        queryClient.invalidateQueries({ queryKey: ['recent-investigations'] });
+        queryClient.invalidateQueries({ queryKey: ['investigation-status'] });
+    };
 
     if (statsLoading && investigationsLoading && statusLoading) {
         return (
             <div className="dashboard-page">
-                <LoadingSkeleton />
+                <DashboardLoading />
             </div>
         );
     }
 
     return (
         <div className="dashboard-page">
-            <DashboardHeader />
+            <DashboardHeader
+                onRefresh={refreshDashboard}
+                refreshing={statsLoading || investigationsLoading}
+            />
 
             {/* Start Investigation Section */}
             <Card className="mb-4 start-investigation-card">
@@ -134,8 +134,7 @@ export default function DashboardPage() {
                         onClick={handleStartInvestigation}
                         disabled={isInvestigationRunning || investigationStatus?.status === 'running'}
                         loading={startInvestigationMutation.isPending}
-                        severity="success"
-                        size="large"
+                        size="small"
                         className="investigation-start-btn"
                     />
                 </div>
@@ -160,7 +159,7 @@ export default function DashboardPage() {
 
             {/* Statistics Cards */}
             {statsError ? (
-                <ErrorMessage error={statsError} />
+                <DashboardError error={statsError} />
             ) : (
                 <StatisticsCards 
                     stats={dashboardStats} 
@@ -179,12 +178,12 @@ export default function DashboardPage() {
                                 label="View All" 
                                 icon="pi pi-external-link"
                                 className="p-button-text"
-                                onClick={() => window.location.href = '/history'}
+                                onClick={() => navigate('/history')}
                             />
                         </div>
 
                         {investigationsError ? (
-                            <ErrorMessage error={investigationsError} />
+                            <DashboardError error={investigationsError} />
                         ) : investigationsLoading ? (
                             <div className="grid">
                                 {[...Array(3)].map((_, i) => (

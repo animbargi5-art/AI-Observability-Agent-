@@ -65,7 +65,7 @@ class TelemetryService:
         if result is None:
             return {}
 
-        logger.info("RAW MCP RESULT: %s", result)
+        logger.debug("Received MCP result of type %s", type(result).__name__)
 
         if not hasattr(result, "content"):
             return {}

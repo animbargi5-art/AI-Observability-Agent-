@@ -1,0 +1,374 @@
+TattvaAI Demo Guide
+==================
+
+Complete step-by-step guide to run and demonstrate TattvaAI locally
+
+
+Prerequisites
+=============
+
+Before starting, ensure you have the following installed:
+
+Required Software:
+- Docker Desktop (latest version)
+- Git (for cloning the repository)
+- Web Browser (Chrome, Firefox, Safari, Edge)
+
+System Requirements:
+- RAM: Minimum 8GB (16GB recommended)
+- Storage: 5GB free space
+- OS: Windows 10/11, macOS 10.15+, or Linux Ubuntu 18.04+
+
+Verify Installation:
+# Check Docker
+docker --version
+docker-compose --version
+
+# Check Git
+git --version
+
+
+Quick Start (5 Minutes)
+=======================
+
+Step 1: Clone the Repository
+git clone https://github.com/animbargi5-art/AI-Observability-Agent-.git TattvaAI
+cd TattvaAI
+
+Step 2: Start TattvaAI
+docker-compose up --build -d
+
+Expected time: 2-3 minutes for initial build
+
+Step 3: Verify Services
+# Check all services are running
+docker-compose ps
+
+# Test backend health
+curl http://localhost:8000/health
+
+Step 4: Access TattvaAI
+Open your browser and navigate to:
+- TattvaAI Dashboard: http://localhost:3001
+- Backend API: http://localhost:8000
+- API Documentation: http://localhost:8000/docs
+
+
+Demo Walkthrough
+================
+
+1. Dashboard Overview
+Navigate to: http://localhost:3001
+
+What You'll See:
+- Statistics Cards: Total investigations, severity breakdown, confidence metrics
+- Recent Investigations: Latest AI-powered incident analyses
+- Quick Actions: Start new investigation button
+- System Status: Real-time health indicators
+
+Demo Points:
+✓ Modern, clean interface  
+✓ Real-time statistics  
+✓ Professional dashboard layout  
+✓ Responsive design  
+
+2. Start an Investigation
+Action: Click "Start Investigation" button
+
+What Happens:
+1. AI Coordinator receives incident report
+2. 6 specialized agents analyze different aspects:
+   - Trace Agent: Analyzes distributed traces
+   - Logs Agent: Processes error logs
+   - Metrics Agent: Evaluates system metrics
+   - Dependency Agent: Maps service failures
+   - Alert Agent: Correlates alerts
+   - Historical Agent: Matches past patterns
+
+Expected Results:
+- Investigation completes in 10-30 seconds
+- Root cause identified with confidence score
+- Evidence-based reasoning provided
+- Actionable recommendations generated
+
+3. Investigation Results
+Navigate to: Investigation details page
+
+Key Features to Highlight:
+
+Evidence Panel:
+- Traces: Latency spikes and error patterns
+- Logs: Critical error messages and frequency  
+- Metrics: Performance degradation indicators
+- Alerts: Correlated system alerts
+
+Root Cause Analysis:
+- Primary Cause: Most likely root cause
+- Confidence Score: AI certainty (0-100%)
+- Supporting Evidence: Links to specific telemetry
+- Impact Assessment: Affected services and users
+
+Recommendations:
+- Immediate Actions: Quick fixes to try now
+- Short-term Solutions: Temporary mitigation steps
+- Long-term Improvements: Prevent future occurrences
+
+Timeline:
+- Investigation Steps: What each agent analyzed
+- Evidence Discovery: When key findings emerged
+- Decision Points: How conclusions were reached
+
+4. Reports & Analytics
+Navigate to: Reports section
+
+Available Reports:
+- Severity Trends: Incident severity over time
+- Investigation Performance: AI accuracy metrics
+- Service Health: System reliability scores
+- Resolution Times: MTTR improvements
+
+5. Investigation History
+Navigate to: History page
+
+Features:
+- Search & Filter: Find specific investigations
+- Sort Options: By date, severity, confidence
+- Status Tracking: Completed, in-progress, failed
+- Export Options: Download investigation reports
+
+
+Advanced Features Demo
+======================
+
+API Testing
+Test the REST API directly:
+
+# Start a new investigation
+curl -X POST "http://localhost:8000/investigation/start?service_name=gateway"
+
+# Get dashboard statistics
+curl http://localhost:8000/dashboard/statistics
+
+# Get recent investigations
+curl http://localhost:8000/dashboard/recent
+
+Microservices Architecture
+View running services:
+docker-compose ps
+
+Expected Services:
+- tattvaai-backend (port 8000) - Main AI engine
+- tattvaai-frontend (port 3001) - React dashboard
+- gateway (port 8011) - API gateway service
+- inventory (port 8002) - Inventory microservice  
+- payment (port 8004) - Payment processing service
+- order (port 8003) - Order management service
+
+Log Monitoring
+View real-time logs:
+# All services
+docker-compose logs -f
+
+# Specific service
+docker-compose logs -f backend
+
+# Investigation coordinator
+docker-compose logs -f backend | grep "IncidentCoordinator"
+
+
+User Interface Highlights
+=========================
+
+Modern Design:
+- Clean Layout: Professional, intuitive interface
+- Responsive: Works on desktop, tablet, mobile
+- Dark/Light Themes: User preference support
+- Loading States: Smooth user experience
+
+Interactive Elements:
+- Real-time Updates: Live investigation progress
+- Drill-down Capability: Click for detailed analysis
+- Export Functions: Save reports as PDF/JSON
+- Search & Filter: Find investigations quickly
+
+Data Visualizations:
+- Investigation Graph: Visual service dependency map
+- Timeline View: Step-by-step investigation flow
+- Statistics Charts: Trend analysis and metrics
+- Evidence Correlation: Interactive evidence links
+
+
+Demo Script (For Presentations)
+===============================
+
+Opening (2 minutes):
+"TattvaAI transforms incident investigation from hours of manual work to minutes of intelligent AI analysis. Let me show you how it works."
+
+Dashboard Tour (2 minutes):
+1. Show Dashboard: "Here's our control center with real-time statistics"
+2. Explain Cards: "6 investigations completed, 94% average confidence"
+3. Recent Activity: "Recent AI investigations with outcomes"
+
+Live Investigation (3 minutes):  
+1. Click Start: "Let's investigate a live incident"
+2. Show Progress: "Watch 6 AI agents analyze different aspects"
+3. Results: "Root cause identified: Redis timeout causing payment failures"
+4. Evidence: "Here's the supporting evidence from traces and logs"
+5. Recommendations: "Immediate, short-term, and long-term solutions"
+
+Technical Deep-dive (2 minutes):
+1. Architecture: "6 microservices generating real telemetry"
+2. API: "RESTful API for integration with existing tools"  
+3. SigNoz: "Native integration with SigNoz observability"
+
+Closing (1 minute):
+"TattvaAI reduces MTTR from hours to minutes while providing consistent, evidence-based investigation methodology."
+
+
+Troubleshooting
+===============
+
+Common Issues:
+
+Services Not Starting:
+# Check Docker daemon
+docker info
+
+# Rebuild containers
+docker-compose down
+docker-compose up --build
+
+Port Conflicts:
+# Check port usage
+netstat -an | grep :8000
+netstat -an | grep :3001
+
+# Stop conflicting services or change ports
+
+Browser Issues:
+# Clear browser cache
+# Try incognito/private mode
+# Check browser console for errors (F12)
+
+Performance Issues:
+# Check available resources
+docker stats
+
+# Increase Docker memory allocation
+# Close unnecessary applications
+
+Health Checks:
+Verify all services:
+# Backend health
+curl http://localhost:8000/health
+# Expected: {"status":"healthy"}
+
+# Frontend accessibility  
+curl http://localhost:3001
+# Expected: HTML response
+
+# API documentation
+curl http://localhost:8000/docs
+# Expected: OpenAPI docs
+
+Log Analysis:
+Check specific issues:
+# Backend errors
+docker-compose logs backend | grep -i error
+
+# Frontend build issues
+docker-compose logs frontend | grep -i error
+
+# Database connection
+docker-compose logs backend | grep -i database
+
+
+Demo Tips & Best Practices
+==========================
+
+For Live Demonstrations:
+
+1. Pre-warm the System:
+   - Start containers 5 minutes before demo
+   - Run one test investigation to cache AI models
+   - Verify all endpoints are responsive
+
+2. Highlight Key Features:
+   - Multi-agent AI system (unique selling point)
+   - Evidence-based reasoning (builds trust)
+   - Real-time investigation (impressive speed)
+   - Professional UI (production-ready)
+
+3. Backup Plans:
+   - Have screenshots ready if demo fails
+   - Prepare alternative scenarios  
+   - Know common issues and quick fixes
+
+For Evaluators/Judges:
+
+1. Technical Depth:
+   - Show API documentation at /docs
+   - Demonstrate REST API with curl commands
+   - Explain microservices architecture
+   - Highlight SigNoz integration
+
+2. Real-world Application:
+   - Explain SRE pain points solved
+   - Show concrete MTTR improvements
+   - Demonstrate scalability potential
+   - Discuss enterprise integration
+
+3. Innovation Points:
+   - Multi-agent AI coordination
+   - Evidence-based reasoning
+   - Historical pattern matching
+   - Native observability integration
+
+
+Success Metrics
+===============
+
+After running the demo, users should understand:
+
+✓ Problem Solved: Manual incident investigation inefficiency  
+✓ Solution Approach: AI-powered multi-agent analysis  
+✓ Technical Implementation: Professional, scalable architecture  
+✓ Business Value: Reduced MTTR, improved reliability  
+✓ Integration Ready: API-first design for existing workflows  
+
+
+Cleanup
+=======
+
+Stop All Services:
+# Graceful shutdown
+docker-compose down
+
+# Remove containers and volumes
+docker-compose down -v
+
+# Clean up images (optional)
+docker system prune -a
+
+Resource Usage:
+- Disk Space: ~2GB containers + 500MB images
+- Memory Usage: ~4GB while running
+- Network: Bridge network tattvaai_tattvaai-network
+
+
+Support & Resources
+===================
+
+Demo Recording Tips:
+- Record at 1080p minimum resolution
+- Show both browser and terminal windows  
+- Highlight cursor movements clearly
+- Include audio narration explaining steps
+
+Presentation Materials:
+- Use screenshots from actual running demo
+- Include architecture diagrams from codebase
+- Reference actual API responses and logs
+- Show real investigation results
+
+Ready to revolutionize incident investigation with AI? Start your TattvaAI demo now!

@@ -1,8 +1,7 @@
 import random
 import time
 
-from fastapi import FastAPI
-import asyncio
+from fastapi import FastAPI, HTTPException
 
 from telemetry import setup_telemetry
 
@@ -21,6 +20,11 @@ async def home():
     return {
         "service": "payment"
     }
+
+
+@app.get("/health")
+async def health():
+    return {"status": "healthy", "service": "payment"}
 
 
 @app.get("/pay/{order_id}")

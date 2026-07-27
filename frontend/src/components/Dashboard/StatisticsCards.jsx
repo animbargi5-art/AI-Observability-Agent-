@@ -1,41 +1,49 @@
 export default function StatisticsCards({ investigations }) {
-    // Handle case where investigations might be undefined or null
-    const safeInvestigations = investigations || [];
+    // The dashboard API wraps recent rows in { investigations, total } while
+    // the query cache may contain either shape during a hot refresh.
+    const safeInvestigations = Array.isArray(investigations)
+        ? investigations
+        : Array.isArray(investigations?.investigations)
+            ? investigations.investigations
+            : [];
 
-    const total = safeInvestigations.length;
+    // Additional safety check to ensure it's always an array
+    const validInvestigations = Array.isArray(safeInvestigations) ? safeInvestigations : [];
 
-    const critical = safeInvestigations.filter(
-        item => item.severity === "CRITICAL"
+    const total = validInvestigations.length;
+
+    const critical = validInvestigations.filter(
+        item => item?.severity === "CRITICAL"
     ).length;
 
-    const high = safeInvestigations.filter(
-        item => item.severity === "HIGH"
+    const high = validInvestigations.filter(
+        item => item?.severity === "HIGH"
     ).length;
 
-    const medium = safeInvestigations.filter(
-        item => item.severity === "MEDIUM"
+    const medium = validInvestigations.filter(
+        item => item?.severity === "MEDIUM"
     ).length;
 
-    const low = safeInvestigations.filter(
-        item => item.severity === "LOW"
+    const low = validInvestigations.filter(
+        item => item?.severity === "LOW"
     ).length;
 
-    const noIssue = safeInvestigations.filter(
-        item => item.severity === "NONE"
+    const noIssue = validInvestigations.filter(
+        item => item?.severity === "NONE"
     ).length;
 
     const avgConfidence =
         total === 0
             ? 0
             : Math.round(
-                safeInvestigations.reduce(
-                    (sum, item) => sum + (item.confidence || 0),
+                validInvestigations.reduce(
+                    (sum, item) => sum + (item?.confidence || 0),
                     0
                 ) / total
             );
 
-    const investigating = safeInvestigations.filter(
-        item => item.status === "INVESTIGATING"
+    const investigating = validInvestigations.filter(
+        item => item?.status === "INVESTIGATING"
     ).length;
 
     return (

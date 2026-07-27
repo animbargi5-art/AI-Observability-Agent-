@@ -42,16 +42,5 @@ export default defineConfig({
         secure: false
       }
     }
-  },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'primereact': ['primereact'],
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'query': ['@tanstack/react-query']
-        }
-      }
-    }
   }
 })

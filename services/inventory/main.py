@@ -17,6 +17,11 @@ async def home():
     return {"service": "inventory"}
 
 
+@app.get("/health")
+async def health():
+    return {"status": "healthy", "service": "inventory"}
+
+
 @app.get("/inventory/{product_id}")
 async def inventory(product_id: int):
 

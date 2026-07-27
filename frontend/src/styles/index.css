@@ -61,6 +61,7 @@
 /* Error handling and loading states */
 @import './components/loading-states.css';
 @import './components/error-handling.css';
+@import './polish.css';
 
 /* Global application styles */
 .app {

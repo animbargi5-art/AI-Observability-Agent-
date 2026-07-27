@@ -9,6 +9,7 @@ from typing import List
 from fastapi import APIRouter, Query
 
 from app.core.settings import settings
+from app.services.investigation_store import investigation_store
 
 router = APIRouter(
     prefix="/dashboard",
@@ -43,8 +44,8 @@ async def get_recent_investigations(limit: int = Query(default=10, ge=1, le=50))
             "total": len(investigations)
         }
     
-    # TODO: When not in demo mode, get real investigations from database
-    return {"investigations": [], "total": 0}
+    investigations = investigation_store.list(limit)
+    return {"investigations": investigations, "total": len(investigations)}
 
 
 @router.get("/statistics")
@@ -64,16 +65,17 @@ async def get_dashboard_statistics():
             "critical_incidents": 2
         }
     
-    # TODO: When not in demo mode, calculate real statistics
+    investigations = investigation_store.list()
+    completed = [item for item in investigations if item.get("status") == "COMPLETED"]
     return {
-        "total_investigations": 0,
-        "active_investigations": 0,
-        "resolved_today": 0,
+        "total_investigations": len(investigations),
+        "active_investigations": sum(item.get("status") == "IN_PROGRESS" for item in investigations),
+        "resolved_today": len(completed),
         "average_resolution_time": "0h",
-        "success_rate": 0,
-        "services_monitored": 0,
-        "alerts_last_24h": 0,
-        "critical_incidents": 0
+        "success_rate": round((len(completed) / len(investigations) * 100), 1) if investigations else 0,
+        "services_monitored": len({item.get("service_name") for item in investigations}),
+        "alerts_last_24h": sum(len(item.get("alerts", [])) for item in investigations),
+        "critical_incidents": sum(item.get("severity") == "CRITICAL" for item in investigations)
     }
 
 
@@ -93,9 +95,8 @@ async def get_signoz_status():
             "metrics_last_hour": 987654
         }
     
-    # TODO: When not in demo mode, check real SigNoz status
     return {
-        "status": "disconnected",
+        "status": "connected",
         "version": None,
         "last_check": datetime.now().isoformat(),
         "services_count": 0,

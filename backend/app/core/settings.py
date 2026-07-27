@@ -12,7 +12,7 @@ class Settings(BaseSettings):
 
     # Allows the product demo and local UI to run without a SigNoz account.
     # Production deployments must explicitly set this to false.
-    DEMO_MODE: bool = True
+    DEMO_MODE: bool = False
 
     OTEL_EXPORTER_OTLP_ENDPOINT: str = "http://localhost:4317"
     OTEL_SERVICE_NAME: str = "tattva-ai-backend"

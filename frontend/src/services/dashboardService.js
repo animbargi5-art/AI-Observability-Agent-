@@ -7,14 +7,15 @@ class DashboardService {
 
     // Get dashboard statistics
     async getDashboardStats() {
-        const response = await api.get(`${this.baseEndpoint}/stats`);
+        const response = await api.get(`${this.baseEndpoint}/statistics`);
         return response.data;
     }
 
     // Get investigation status
     async getInvestigationStatus() {
-        const response = await api.get(`${this.baseEndpoint}/status`);
-        return response.data;
+        // Investigations run synchronously today. Keep a stable UI contract
+        // until the backend exposes a persisted progress endpoint.
+        return { status: 'idle' };
     }
 
     // Get recent investigations
@@ -22,12 +23,12 @@ class DashboardService {
         const response = await api.get(`${this.baseEndpoint}/recent`, {
             params: { limit }
         });
-        return response.data;
+        return response.data.investigations ?? [];
     }
 
     // Get system health
     async getSystemHealth() {
-        const response = await api.get(`${this.baseEndpoint}/health`);
+        const response = await api.get(`${this.baseEndpoint}/health-overview`);
         return response.data;
     }
 

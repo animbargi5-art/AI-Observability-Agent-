@@ -70,6 +70,19 @@ class TelemetryService:
 
     def _extract_payload(self, raw) -> dict:
 
+        # MCPGateway already converts CallToolResult text into native Python
+        # data.  Keep accepting the original result shape for compatibility,
+        # but do not discard the live SigNoz response once it is a dict.
+        if isinstance(raw, dict):
+            return raw
+
+        if isinstance(raw, str):
+            try:
+                payload = json.loads(raw)
+                return payload if isinstance(payload, dict) else {}
+            except json.JSONDecodeError:
+                return {}
+
         logger.info("=" * 80)
         logger.info("RAW MCP RESPONSE")
         logger.info("=" * 80)
@@ -539,7 +552,12 @@ class TelemetryService:
         Convert from SigNoz telemetry data into HistoricalIncident models.
         """
         logger.info("Getting historical incidents for service: %s", service_name)
-        
+
+        from app.core.settings import settings
+
+        if settings.DEMO_MODE:
+            return self._generate_mock_historical_incidents(service_name)
+
         # Use the new method that returns proper HistoricalIncident models
         incidents = await self.signoz.get_historical_incidents_as_models(
             service_name=service_name,
@@ -646,14 +664,14 @@ class TelemetryService:
         
         alerts = []
         alert = Alert(
-            id=f"alert_{service_name}_1",
+            alert_id=f"alert_{service_name}_1",
             name="High Error Rate",
             severity="HIGH",
             status="FIRING",
             service_name=service_name,
             description=f"Error rate above threshold for {service_name}",
-            created_at=datetime.now() - timedelta(minutes=30),
-            updated_at=datetime.now() - timedelta(minutes=5),
+            fired_at=datetime.now() - timedelta(minutes=30),
+            last_updated=datetime.now() - timedelta(minutes=5),
             labels={"alertname": "HighErrorRate", "service": service_name}
         )
         alerts.append(alert)
@@ -663,18 +681,27 @@ class TelemetryService:
         """Generate mock historical incident data for demo mode."""
         from datetime import datetime, timedelta
         
-        incidents = []
-        incident = HistoricalIncident(
-            id=f"incident_{service_name}_1",
-            service_name=service_name,
-            incident_type="PERFORMANCE",
-            description=f"Database connection timeout in {service_name}",
-            root_cause="Database connection pool exhaustion",
-            resolution="Increased connection pool size and added connection retry logic",
-            occurred_at=datetime.now() - timedelta(days=7),
-            resolved_at=datetime.now() - timedelta(days=7, hours=-2),
-            severity="HIGH",
-            affected_components=[service_name, "database"]
-        )
-        incidents.append(incident)
-        return incidents
+        resolved_at = datetime.now() - timedelta(days=7)
+        return [
+            HistoricalIncident(
+                incident_id=f"incident_{service_name}_1",
+                title=f"Database connection timeout in {service_name}",
+                service_name=service_name,
+                endpoint="/api/checkout",
+                operation="POST /api/checkout",
+                environment="demo",
+                severity="HIGH",
+                status="RESOLVED",
+                root_cause="Database connection pool exhaustion",
+                resolution="Increased connection pool size and added connection retry logic",
+                confidence=94,
+                similarity_score=0.94,
+                occurrence_count=3,
+                resolved_by="TattvaAI demo",
+                previous_recommendation="Scale the connection pool and add retry telemetry.",
+                started_at=resolved_at - timedelta(hours=2),
+                resolved_at=resolved_at,
+                tags=[service_name, "database", "performance"],
+                metadata={"scenario": "demo"},
+            )
+        ]

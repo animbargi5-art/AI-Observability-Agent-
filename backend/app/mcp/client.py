@@ -102,9 +102,7 @@ class MCPClient:
 
             await mcp_session.mark_initialized()
 
-            logger.info(
-                "Headers being sent: %s",headers
-            )
+            logger.info("MCP authentication configured: %s", bool(self.api_key))
 
         except Exception as ex:
 

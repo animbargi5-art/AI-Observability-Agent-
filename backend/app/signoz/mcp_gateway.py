@@ -36,6 +36,8 @@ SigNoz MCP Server
 
 from __future__ import annotations
 
+import json
+
 from typing import Any
 
 from app.mcp.client import MCPClient
@@ -143,8 +145,7 @@ class MCPGateway:
                 arguments,
             )
 
-            logger.info("RAW MCP RESULT:")
-            logger.info(result) 
+            logger.info("MCP tool '%s' returned a response.", tool_name)
 
             return self._extract_payload(result)
 

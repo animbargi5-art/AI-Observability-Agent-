@@ -19,6 +19,11 @@ async def home():
         "service": "gateway"
     }
 
+
+@app.get("/health")
+async def health():
+    return {"status": "healthy", "service": "gateway"}
+
 @app.get("/orders")
 async def get_orders():
 
@@ -27,7 +32,7 @@ async def get_orders():
     async with httpx.AsyncClient() as client:
 
         response = await client.get(
-            "http://127.0.0.1:8101/orders"
+            "http://order:8000/orders"
         )
 
         return response.json()

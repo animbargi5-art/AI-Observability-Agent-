@@ -52,80 +52,118 @@ def setup_tracing(app):
         }
     )
 
-    # -----------------------------
-    # Tracing
-    # -----------------------------
+    # In demo mode, use console exporters instead of OTLP
+    if settings.DEMO_MODE:
+        print("🎯 Running in DEMO MODE - Using console exporters for telemetry")
+        
+        # Import console exporters
+        from opentelemetry.sdk.trace.export import ConsoleSpanExporter
+        from opentelemetry.sdk.metrics.export import ConsoleMetricExporter
+        from opentelemetry.sdk._logs.export import ConsoleLogExporter
+        
+        # -----------------------------
+        # Tracing (Console)
+        # -----------------------------
+        tracer_provider = TracerProvider(resource=resource)
+        console_trace_exporter = ConsoleSpanExporter()
+        tracer_provider.add_span_processor(BatchSpanProcessor(console_trace_exporter))
+        trace.set_tracer_provider(tracer_provider)
 
-    tracer_provider = TracerProvider(
-        resource=resource
-    )
+        # -----------------------------
+        # Metrics (Console)
+        # -----------------------------
+        console_metric_exporter = ConsoleMetricExporter()
+        metric_reader = PeriodicExportingMetricReader(console_metric_exporter)
+        meter_provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
+        metrics.set_meter_provider(meter_provider)
 
-    trace_exporter = OTLPSpanExporter(
-        endpoint=settings.OTEL_EXPORTER_OTLP_ENDPOINT,
-        insecure=True,
-    )
+        # -----------------------------
+        # Logs (Console)
+        # -----------------------------
+        console_log_exporter = ConsoleLogExporter()
+        logger_provider = LoggerProvider(resource=resource)
+        logger_provider.add_log_record_processor(BatchLogRecordProcessor(console_log_exporter))
+        set_logger_provider(logger_provider)
 
-    tracer_provider.add_span_processor(
-        BatchSpanProcessor(trace_exporter)
-    )
+        print("✅ OpenTelemetry initialized in DEMO MODE (Console exporters)")
+        
+    else:
+        # Production mode with OTLP exporters
+        print("🚀 Running in PRODUCTION MODE - Using OTLP exporters")
+        
+        # -----------------------------
+        # Tracing
+        # -----------------------------
 
-    trace.set_tracer_provider(tracer_provider)
-
-    # -----------------------------
-    # Metrics
-    # -----------------------------
-
-    metric_exporter = OTLPMetricExporter(
-        endpoint=settings.OTEL_EXPORTER_OTLP_ENDPOINT,
-        insecure=True,
-    )
-
-    metric_reader = PeriodicExportingMetricReader(
-        metric_exporter
-    )
-
-    meter_provider = MeterProvider(
-        resource=resource,
-        metric_readers=[metric_reader],
-    )
-
-    metrics.set_meter_provider(
-        meter_provider
-    )
-
-    # -----------------------------
-    # Logs
-    # -----------------------------
-
-    log_exporter = OTLPLogExporter(
-        endpoint=settings.OTEL_EXPORTER_OTLP_ENDPOINT,
-        insecure=True,
-    )
-
-    logger_provider = LoggerProvider(
-        resource=resource,
-    )
-
-    logger_provider.add_log_record_processor(
-        BatchLogRecordProcessor(
-            log_exporter
+        tracer_provider = TracerProvider(
+            resource=resource
         )
-    )
 
-    set_logger_provider(
-        logger_provider
-    )
+        trace_exporter = OTLPSpanExporter(
+            endpoint=settings.OTEL_EXPORTER_OTLP_ENDPOINT,
+            insecure=True,
+        )
 
+        tracer_provider.add_span_processor(
+            BatchSpanProcessor(trace_exporter)
+        )
+
+        trace.set_tracer_provider(tracer_provider)
+
+        # -----------------------------
+        # Metrics
+        # -----------------------------
+
+        metric_exporter = OTLPMetricExporter(
+            endpoint=settings.OTEL_EXPORTER_OTLP_ENDPOINT,
+            insecure=True,
+        )
+
+        metric_reader = PeriodicExportingMetricReader(
+            metric_exporter
+        )
+
+        meter_provider = MeterProvider(
+            resource=resource,
+            metric_readers=[metric_reader],
+        )
+
+        metrics.set_meter_provider(
+            meter_provider
+        )
+
+        # -----------------------------
+        # Logs
+        # -----------------------------
+
+        log_exporter = OTLPLogExporter(
+            endpoint=settings.OTEL_EXPORTER_OTLP_ENDPOINT,
+            insecure=True,
+        )
+
+        logger_provider = LoggerProvider(
+            resource=resource,
+        )
+
+        logger_provider.add_log_record_processor(
+            BatchLogRecordProcessor(
+                log_exporter
+            )
+        )
+
+        set_logger_provider(
+            logger_provider
+        )
+
+        print("✅ OpenTelemetry initialized in PRODUCTION MODE")
+
+    # -----------------------------
+    # Common Instrumentation 
+    # -----------------------------
+    
     LoggingInstrumentor().instrument(
         set_logging_format=True
     )
 
-    # -----------------------------
-    # Auto Instrumentation
-    # -----------------------------
-
     FastAPIInstrumentor.instrument_app(app)
-
     RequestsInstrumentor().instrument()
-
-    print("✅ OpenTelemetry initialized")

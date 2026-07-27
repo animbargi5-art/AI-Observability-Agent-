@@ -1,3 +1,5 @@
+import os
+
 from opentelemetry import trace
 
 from opentelemetry.sdk.resources import Resource
@@ -19,11 +21,15 @@ from opentelemetry.instrumentation.httpx import (
 
 
 def setup_telemetry(app, service_name: str):
+    endpoint = os.getenv(
+        "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
+        "http://localhost:4318/v1/traces",
+    )
 
     print("===================================")
     print("Initializing Gateway Telemetry")
     print("Service:", service_name)
-    print("OTLP Endpoint: http://localhost:4318/v1/traces")
+    print("OTLP Endpoint:", endpoint)
     print("===================================")
 
     resource = Resource.create(
@@ -35,7 +41,7 @@ def setup_telemetry(app, service_name: str):
     provider = TracerProvider(resource=resource)
 
     exporter = OTLPSpanExporter(
-        endpoint="http://localhost:4318/v1/traces"
+        endpoint=endpoint
     )
 
     processor = BatchSpanProcessor(exporter)
