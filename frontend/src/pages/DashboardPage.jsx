@@ -97,7 +97,7 @@ export default function DashboardPage() {
     });
 
     const handleStartInvestigation = () => {
-        startInvestigationMutation.mutate();
+        startInvestigationMutation.mutate({ service_name: "gateway" });
     };
 
     const refreshDashboard = () => {

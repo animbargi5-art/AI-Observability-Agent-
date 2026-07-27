@@ -8,7 +8,6 @@ class HistoryService {
     // Get all investigations for DataTable  
     async getAllInvestigations(params = {}) {
         try {
-            console.log('Fetching investigations with baseEndpoint:', this.baseEndpoint);
             const response = await api.get(`${this.baseEndpoint}/history`, { params });
             return response.data;
         } catch (error) {
