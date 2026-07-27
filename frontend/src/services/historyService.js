@@ -2,13 +2,14 @@ import api from "../api/interceptors.js";
 
 class HistoryService {
     constructor() {
-        this.baseEndpoint = "/investigations";
+        this.baseEndpoint = "/investigation";
     }
 
-    // Get all investigations for DataTable
+    // Get all investigations for DataTable  
     async getAllInvestigations(params = {}) {
         try {
-            const response = await api.get(this.baseEndpoint, { params });
+            console.log('Fetching investigations with baseEndpoint:', this.baseEndpoint);
+            const response = await api.get(`${this.baseEndpoint}/history`, { params });
             return response.data;
         } catch (error) {
             console.error('Error fetching investigations:', error);

@@ -7,7 +7,10 @@ class InvestigationService {
 
     // Start new investigation
     async startInvestigation(params = {}) {
-        const response = await api.post(`${this.baseEndpoint}/start`, params);
+        const { service_name = "gateway", ...otherParams } = params;
+        console.log('Starting investigation with params:', { service_name, ...otherParams });
+        console.log('Base endpoint:', this.baseEndpoint);
+        const response = await api.post(`${this.baseEndpoint}/start?service_name=${service_name}`, otherParams);
         return response.data;
     }
 

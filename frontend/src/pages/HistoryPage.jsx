@@ -14,7 +14,7 @@ import { Toast } from 'primereact/toast';
 import { ProgressBar } from 'primereact/progressbar';
 import { FilterMatchMode, FilterOperator } from 'primereact/api';
 import { useNavigate } from 'react-router-dom';
-import { historyService } from '../services/historyService';
+import historyService from '../services/historyService';
 import '../styles/pages.css';
 
 const HistoryPage = () => {
